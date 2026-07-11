@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bono Mudanzas Express</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--rojo:#E8402A;--negro:#1A1A1A;--crema:#FAF7F2;--gris:#6B6B6B;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0EDE8;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;gap:1.2rem;}
+  h1{font-size:1.5rem;font-weight:800;color:var(--negro);letter-spacing:1px;text-align:center;}
+  .panel{background:white;border-radius:16px;padding:1.4rem 1.6rem;width:100%;max-width:480px;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:flex;flex-direction:column;gap:0.9rem;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+  label{font-size:0.7rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:0.3rem;}
+  input{width:100%;border:1.5px solid #E0DDD8;border-radius:8px;padding:0.65rem 0.9rem;font-size:1rem;color:var(--negro);outline:none;font-family:inherit;}
+  input:focus{border-color:var(--rojo);}
+  .btn-gen{background:var(--rojo);color:white;border:none;border-radius:10px;padding:0.85rem;font-size:1.1rem;font-weight:800;cursor:pointer;width:100%;letter-spacing:1px;}
+  /* Preview canvas */
+  .preview{width:100%;max-width:480px;}
+  canvas#voucher-canvas{width:100%;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);display:none;}
+  /* QR oculto para generar */
+  #qr-hidden{position:absolute;left:-9999px;top:0;}
+  /* Acciones */
+  .acciones{display:flex;flex-direction:column;gap:0.7rem;width:100%;max-width:480px;}
+  .btn{padding:0.8rem 1rem;border-radius:10px;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;width:100%;}
+  .btn-img{background:var(--rojo);color:white;font-size:1rem;}
+  .btn-wa{background:#25D366;color:white;}
+  .btn-resena{background:#4285F4;color:white;}
+  .status{font-size:0.85rem;text-align:center;min-height:1.2rem;font-weight:600;padding:0 1rem;}
+</style>
+</head>
+<body>
+
+<h1>🚛 Bono Mudanzas Express</h1>
+
+<div class="panel">
+  <div class="row">
+    <div>
+      <label>Nombre del cliente</label>
+      <input type="text" id="inp-nombre" placeholder="Carlos Martínez" autofocus>
+    </div>
+    <div>
+      <label>Teléfono WhatsApp</label>
+      <input type="tel" id="inp-tel" placeholder="5514120283">
+    </div>
+  </div>
+  <button class="btn-gen" onclick="generarVoucher()">⚡ GENERAR BONO</button>
+</div>
+
+<div class="preview">
+  <canvas id="voucher-canvas" width="1000" height="580"></canvas>
+</div>
+
+<div id="qr-hidden"><div id="qrcode-hidden"></div></div>
+
+<div class="status" id="status"></div>
+
+<div class="acciones" id="acciones" style="display:none">
+  <button class="btn btn-img" onclick="descargarImagen()">📸 Guardar imagen (WhatsApp)</button>
+  <button class="btn btn-wa" onclick="enviarWA()">💬 Enviar mensaje de bono</button>
+</div>
+
+<script>
+const LOGO_SRC = 'data:image/png;base64,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';
+const ROJO = '#E8402A';
+const NEGRO = '#1A1A1A';
+const CREMA = '#FAF7F2';
+
+let nombreActual = '';
+let telActual = '';
+
+function capitalizar(s){
+  return s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+}
+function limpiarTel(t){
+  let n=t.replace(/\D/g,'');
+  if(n.length===10)n='52'+n;
+  return n;
+}
+function fechaHoy(){
+  const d=new Date();
+  const m=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear();
+}
+function setStatus(msg,color){
+  const s=document.getElementById('status');
+  s.textContent=msg;
+  s.style.color=color||'#6B6B6B';
+}
+
+function generarVoucher(){
+  const nombreRaw=document.getElementById('inp-nombre').value.trim();
+  const tel=document.getElementById('inp-tel').value.trim();
+  if(!nombreRaw){alert('Ingresa el nombre del cliente');return;}
+
+  nombreActual=capitalizar(nombreRaw);
+  telActual=limpiarTel(tel);
+
+  // Generar QR primero, luego dibujar canvas
+  const qrDiv=document.getElementById('qrcode-hidden');
+  qrDiv.innerHTML='';
+  const msgQR=encodeURIComponent('Hola Mudanzas Express, deseo canjear mi bono de descuento del 10% en mi próxima mudanza.');
+  new QRCode(qrDiv,{
+    text:'https://wa.me/525548137259?text='+msgQR,
+    width:140,height:140,
+    colorDark:'#1A1A1A',colorLight:'#ffffff',
+    correctLevel:QRCode.CorrectLevel.M
+  });
+
+  // Esperar QR y logo
+  setTimeout(()=>{
+    const logo=new Image();
+    logo.onload=()=>dibujarCanvas(logo);
+    logo.onerror=()=>dibujarCanvas(null);
+    logo.src=LOGO_SRC;
+  },300);
+}
+
+function dibujarCanvas(logoImg){
+  const canvas=document.getElementById('voucher-canvas');
+  const ctx=canvas.getContext('2d');
+  // Vertical — formato móvil
+  const W=600, H=900;
+  canvas.width=W; canvas.height=H;
+
+  // Fondo crema
+  ctx.fillStyle=CREMA;
+  ctx.beginPath();
+  ctx.roundRect(0,0,W,H,24);
+  ctx.fill();
+
+  // ── HEADER ROJO ──
+  ctx.fillStyle=ROJO;
+  ctx.beginPath();
+  ctx.roundRect(0,0,W,180,{upperLeft:24,upperRight:24,lowerLeft:0,lowerRight:0});
+  ctx.fill();
+
+  // Círculo decorativo
+  ctx.fillStyle='rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.arc(W-30,30,120,0,Math.PI*2);
+  ctx.fill();
+
+  // Logo
+  if(logoImg){ ctx.drawImage(logoImg,28,24,110,110); }
+
+  // Texto MUDANZAS EXPRESS
+  ctx.fillStyle='white';
+  ctx.font='bold 42px -apple-system,sans-serif';
+  ctx.fillText('MUDANZAS EXPRESS',150,75);
+  ctx.font='500 17px -apple-system,sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.72)';
+  ctx.fillText('PETÉN 227  ·  NARVARTE  ·  CDMX',152,105);
+
+  // Badge 10%
+  ctx.fillStyle='white';
+  ctx.shadowColor='rgba(0,0,0,0.18)';
+  ctx.shadowBlur=16;
+  ctx.beginPath();
+  ctx.roundRect(150,120,260,50,12);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle=ROJO;
+  ctx.font='bold 28px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('10% DESCUENTO',280,152);
+  ctx.textAlign='left';
+
+  // ── BORDE DENTADO ──
+  ctx.fillStyle=CREMA;
+  ctx.beginPath();
+  ctx.moveTo(0,180);
+  const ondas=30, aw=W/ondas;
+  for(let i=0;i<ondas;i++){
+    ctx.quadraticCurveTo((i+0.5)*aw,165,(i+1)*aw,180);
+  }
+  ctx.lineTo(W,220);ctx.lineTo(0,220);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── SECCIÓN BONO ──
+  ctx.fillStyle='#aaa';
+  ctx.font='600 15px -apple-system,sans-serif';
+  ctx.fillText('PARA',36,248);
+
+  ctx.fillStyle=NEGRO;
+  ctx.font='bold 50px -apple-system,sans-serif';
+  ctx.fillText(nombreActual.toUpperCase(),36,305);
+
+  ctx.fillStyle='#555';
+  ctx.font='20px -apple-system,sans-serif';
+  ctx.fillText('Gracias por confiar en nosotros para tu mudanza.',36,345);
+  ctx.fillText('Este bono es tuyo — úsalo tú o regálaselo',36,372);
+  ctx.fillText('a quien lo necesite.',36,399);
+
+  // Badge transferible
+  ctx.fillStyle='#FFF3E0';
+  ctx.beginPath();
+  ctx.roundRect(34,418,W-68,44,22);
+  ctx.fill();
+  ctx.strokeStyle='#FFCC80';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle='#E65100';
+  ctx.font='bold 17px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('🎁  Transferible — compártelo con quien quieras',W/2,446);
+  ctx.textAlign='left';
+
+  // QR centrado
+  const qrImg=document.querySelector('#qrcode-hidden img');
+  if(qrImg){
+    ctx.fillStyle='white';
+    ctx.beginPath();
+    ctx.roundRect(W/2-80,476,160,160,12);
+    ctx.fill();
+    ctx.strokeStyle='#E0DDD8';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.drawImage(qrImg,W/2-70,486,140,140);
+  }
+  ctx.fillStyle='#999';
+  ctx.font='15px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('Escanea para canjear tu bono por WhatsApp',W/2,656);
+  ctx.textAlign='left';
+
+  // ── SEPARADOR RESEÑA ──
+  ctx.fillStyle='#E0DDD8';
+  ctx.fillRect(34,676,W-68,1);
+
+  // Sección reseña Google
+  ctx.fillStyle='#4285F4';
+  ctx.font='bold 20px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('⭐ ¿Nos regalas 1 minuto?',W/2,710);
+  ctx.fillStyle='#555';
+  ctx.font='17px -apple-system,sans-serif';
+  ctx.fillText('Déjanos una reseña en Google — nos ayuda mucho',W/2,736);
+  ctx.fillText('a que más familias nos encuentren.',W/2,760);
+  ctx.fillStyle='#4285F4';
+  ctx.font='bold 16px -apple-system,sans-serif';
+  ctx.fillText('👉 g.page/r/CUeLgNoQOI9_EAE/review',W/2,788);
+  ctx.textAlign='left';
+
+  // ── FOOTER NEGRO ──
+  ctx.fillStyle=NEGRO;
+  ctx.beginPath();
+  ctx.roundRect(0,H-90,W,90,{upperLeft:0,upperRight:0,lowerLeft:24,lowerRight:24});
+  ctx.fill();
+
+  const fi=[
+    {label:'TELÉFONO',val:'55 4813 7259'},
+    {label:'SERVICIO',val:fechaHoy()},
+    {label:'VIGENCIA',val:'Sin límite'}
+  ];
+  const colW=W/3;
+  fi.forEach((item,i)=>{
+    const x=i*colW+28;
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.font='600 11px -apple-system,sans-serif';
+    ctx.fillText(item.label,x,H-60);
+    ctx.fillStyle='white';
+    ctx.font='600 16px -apple-system,sans-serif';
+    ctx.fillText(item.val,x,H-36);
+  });
+
+  canvas.style.display='block';
+  document.getElementById('acciones').style.display='flex';
+  setStatus('✓ Bono generado para '+nombreActual,'#1D9E75');
+}
+
+function descargarImagen(){
+  const canvas=document.getElementById('voucher-canvas');
+  const nombre=nombreActual.replace(/\s+/g,'');
+  const esIphone=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if(esIphone){
+    // iPhone: modal dentro de la misma página — no pierde el contexto
+    const dataUrl=canvas.toDataURL('image/jpeg',0.95);
+    let modal=document.getElementById('img-modal');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='img-modal';
+      modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.93);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding:20px;box-sizing:border-box;overflow-y:auto;';
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML=
+      '<div style="background:#E8402A;color:white;padding:14px 20px;border-radius:12px;font-family:sans-serif;font-size:15px;text-align:center;max-width:320px;line-height:1.6;margin-top:10px;">'+
+      '📸 <strong>Mantén presionada la imagen</strong><br>Elige <strong>"Añadir a Fotos"</strong><br><span style="font-size:13px;opacity:0.85">Luego envíala por WhatsApp desde tu Carrete</span></div>'+
+      '<img src="'+dataUrl+'" style="max-width:100%;border-radius:12px;display:block;" alt="Bono"/>'+
+      '<button onclick="document.getElementById(\'img-modal\').style.display=\'none\'" '+
+      'style="background:white;color:#1A1A1A;border:none;border-radius:10px;padding:14px 40px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:20px;">'+
+      '← Regresar al generador</button>';
+    modal.style.display='flex';
+    setStatus('Mantén presionada la imagen → Añadir a Fotos → enviar por WhatsApp','#E8402A');
+  } else {
+    // Android / PC: descarga directa
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=nombre+'_BONO.jpg';
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+      setStatus('✓ Guardado: '+nombre+'_BONO.jpg en Descargas','#1D9E75');
+    },'image/jpeg',0.95);
+  }
+}
+
+function pedirResena(){
+  const tel=limpiarTel(document.getElementById('inp-tel').value);
+  if(!tel||tel.length<12){alert('Ingresa el teléfono del cliente');return;}
+  const msg=encodeURIComponent(
+    'Hola '+nombreActual+'! 🙏\n\n'+
+    'Tu opinión nos ayuda mucho a seguir creciendo y a que más familias encuentren un servicio confiable.\n\n'+
+    '¿Nos regalas 1 minuto para dejarnos una reseña en Google?\n\n'+
+    'Presiona la siguiente liga y en menos de 1 minuto puedes dejarnos tu comentario:\n'+
+    '👉 https://g.page/r/CUeLgNoQOI9_EAE/review\n\n'+
+    '¡Muchas gracias! — Equipo Mudanzas Express 🚛'
+  );
+  window.open('https://wa.me/'+tel+'?text='+msg,'_blank');
+}
+
+function enviarWA(){
+  const tel=limpiarTel(document.getElementById('inp-tel').value);
+  if(!tel||tel.length<12){alert('Ingresa el teléfono del cliente');return;}
+  const msg=encodeURIComponent(
+    'Hola '+nombreActual+'! 🎁\n\n'+
+    'Gracias por tu mudanza con Mudanzas Express.\n\n'+
+    'Te enviamos tu bono especial de 10% de descuento.\n'+
+    'Es transferible: úsalo tú o regálaselo a quien quieras.\n'+
+    'Sin fecha de vencimiento.\n\n'+
+    'Para canjearlo escríbenos:\n'+
+    'Tel: 55 4813 7259\n\n'+
+    'Mudanzas Express · Petén 227, Narvarte CDMX\n\n'+
+    '—\n\n'+
+    '⭐ ¿Nos regalas 1 minuto?\n\n'+
+    'Tu opinión nos ayuda mucho a que más familias encuentren un servicio confiable.\n\n'+
+    'Presiona la siguiente liga y en menos de 1 minuto puedes dejarnos tu reseña en Google:\n'+
+    '👉 https://g.page/r/CUeLgNoQOI9_EAE/review\n\n'+
+    '¡Muchas gracias! — Equipo Mudanzas Express 🚛'
+  );
+  window.open('https://wa.me/'+tel+'?text='+msg,'_blank');
+}
+
+// Pre-cargar datos del cliente desde el registro de servicio
+window.addEventListener('load', function() {
+  try {
+    const srv = JSON.parse(sessionStorage.getItem('mex_srv') || 'null');
+    if (srv) {
+      if (srv.nombre) document.getElementById('inp-nombre').value = srv.nombre;
+      if (srv.tel)    document.getElementById('inp-tel').value    = srv.tel.replace(/[^0-9]/g, '').slice(-10);
+    }
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

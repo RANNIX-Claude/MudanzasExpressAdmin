@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mudanzas Express — Servicios</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rojo:#E8391A; --rojo-dark:#C02E13; --rojo-light:#FAECE7;
+  --azul:#1B3F7A; --azul-dark:#122B55; --azul-light:#E8EEF8;
+  --naranja:#E87722;
+  --dark:#111; --mid:#444; --muted:#888;
+  --border:#E5E0DA; --bg:#F4F2EF; --white:#FFF;
+  --green:#1A7A3F; --green-light:#E6F4EC;
+  --yellow:#B07800; --yellow-light:#FFF8E1;
+  --gray:#F0EDE8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+
+.header{background:var(--dark);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-logo{height:34px;width:34px;border-radius:50%;object-fit:cover}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;color:white;letter-spacing:.04em}
+.header-title span{color:var(--naranja)}
+.btn-nuevo{background:var(--rojo);color:white;border:none;border-radius:10px;padding:10px 18px;font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;white-space:nowrap}
+.btn-nuevo:hover{background:var(--rojo-dark)}
+
+.filtros{background:white;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:180px;position:relative}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.search-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 12px 9px 34px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;background:var(--bg);transition:border-color .15s}
+.search-input:focus{border-color:var(--rojo);background:white}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--mid);white-space:nowrap}
+.chip.active{background:var(--dark);color:white;border-color:var(--dark)}
+.chip.salvador.active{background:var(--rojo);border-color:var(--rojo);color:white}
+.chip.andrea.active{background:var(--azul);border-color:var(--azul);color:white}
+
+.contadores{padding:14px 20px 4px;display:flex;gap:16px;align-items:baseline}
+.cnt-total{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;color:var(--dark);line-height:1}
+.cnt-label{font-size:13px;color:var(--muted);font-weight:500}
+.cnt-chips{display:flex;gap:8px;margin-left:auto}
+.mini-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.mini-chip.s{background:var(--rojo-light);color:var(--rojo)}
+.mini-chip.a{background:var(--azul-light);color:var(--azul)}
+
+.lista{padding:10px 20px 100px;display:flex;flex-direction:column;gap:8px}
+.card{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.card.salvador::before{background:var(--rojo)}
+.card.andrea::before{background:var(--azul)}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08);border-color:#ccc}
+.card-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;font-family:'Barlow Condensed',sans-serif}
+.card-av.salvador{background:var(--rojo-light);color:var(--rojo)}
+.card-av.andrea{background:var(--azul-light);color:var(--azul)}
+.card-body{flex:1;min-width:0}
+.card-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-ruta{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-ruta span{color:var(--mid);font-weight:600}
+.card-right{text-align:right;flex-shrink:0}
+.card-fecha{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.card-monto{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+.badge-cotizacion{background:var(--yellow-light);color:var(--yellow)}
+.badge-confirmado{background:var(--azul-light);color:var(--azul)}
+.badge-realizado{background:var(--green-light);color:var(--green)}
+.badge-cancelado{background:var(--gray);color:var(--muted)}
+.card-arrow{color:var(--border);font-size:20px;flex-shrink:0}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted);display:none}
+.empty.visible{display:block}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--mid);margin-bottom:6px}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:white;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;padding-bottom:32px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.sheet-hdr{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sheet-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px}
+.sheet-close{background:var(--gray);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mid)}
+.sheet-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+
+.vendedor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vbtn{padding:14px;border-radius:12px;border:2px solid var(--border);background:var(--bg);cursor:pointer;text-align:center;transition:all .15s;font-family:'Barlow',sans-serif}
+.vbtn:hover{border-color:var(--mid)}
+.vbtn.sel.salvador{background:var(--rojo-light);border-color:var(--rojo)}
+.vbtn.sel.andrea{background:var(--azul-light);border-color:var(--azul)}
+.vbtn-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;display:block}
+.vbtn.sel.salvador .vbtn-name{color:var(--rojo)}
+.vbtn.sel.andrea .vbtn-name{color:var(--azul)}
+.vbtn-sub{font-size:11px;color:var(--muted);font-weight:600}
+
+.wa-box{border:1.5px dashed var(--border);border-radius:12px;padding:12px 14px;background:#FAFAF8}
+.wa-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;display:block}
+.wa-area{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Barlow',sans-serif;resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+.wa-area:focus{border-color:#25D366}
+.btn-wa{background:#25D366;color:white;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.btn-wa:hover{background:#1DAE55}
+.btn-wa:disabled{opacity:.6;cursor:not-allowed}
+
+.sec-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:6px;display:block}
+.frow{display:grid;gap:10px}
+.frow.c2{grid-template-columns:1fr 1fr}
+.frow.c3{grid-template-columns:1fr 1fr 1fr}
+.ff{display:flex;flex-direction:column;gap:4px}
+.flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.fi{border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:14px;font-family:'Barlow',sans-serif;color:var(--dark);outline:none;width:100%;transition:border-color .15s;background:white}
+.fi:focus{border-color:var(--rojo)}
+select.fi{cursor:pointer}
+.fi-ta{min-height:60px;resize:vertical;line-height:1.5}
+
+/* ── TABLA DETALLE DEL SERVICIO ── */
+.detalle-tabla{width:100%;border-collapse:collapse;margin-top:6px}
+.detalle-tabla th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:4px 8px;text-align:left;border-bottom:1.5px solid var(--border)}
+.detalle-tabla td{padding:4px 4px}
+.detalle-tabla td:first-child{width:70px}
+.detalle-tabla .td-cant input{width:60px;text-align:center}
+.detalle-tabla .td-desc input{width:100%}
+.detalle-tabla .td-del{width:32px;text-align:center}
+.detalle-tabla .td-del button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:6px}
+.detalle-tabla .td-del button:hover{background:#FDEEEE;color:var(--rojo)}
+.btn-add-item{background:none;border:1.5px dashed var(--border);color:var(--muted);font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;cursor:pointer;transition:all .15s;margin-top:6px;display:inline-flex;align-items:center;gap:6px}
+.btn-add-item:hover{border-color:var(--dark);color:var(--dark)}
+
+.btn-save{width:100%;background:var(--dark);color:white;border:none;border-radius:12px;padding:15px;font-family:'Barlow',sans-serif;font-weight:800;font-size:16px;cursor:pointer;transition:background .15s;letter-spacing:.02em;margin-top:4px}
+.btn-save:hover{background:#333}
+.btn-save.salvador{background:var(--rojo)}
+.btn-save.salvador:hover{background:var(--rojo-dark)}
+.btn-save.andrea{background:var(--azul)}
+.btn-save.andrea:hover{background:var(--azul-dark)}
+
+/* ── FICHA SERVICIO ── */
+.ficha-hero{padding:20px 20px 16px;position:relative}
+.ficha-hero.salvador{background:var(--rojo)}
+.ficha-hero.andrea{background:var(--azul)}
+.ficha-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:30px;color:white;line-height:1;margin-bottom:4px}
+.ficha-sub{font-size:13px;color:rgba(255,255,255,.75)}
+.ficha-tag{display:inline-block;background:rgba(255,255,255,.2);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px;letter-spacing:.06em;text-transform:uppercase}
+.ficha-datos{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--border)}
+.dato{}
+.dato-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px}
+.dato-val{font-size:14px;font-weight:600}
+.dato-full{grid-column:1/-1}
+.detalle-lista{margin-top:4px;display:flex;flex-direction:column;gap:3px}
+.detalle-item{font-size:13px;color:var(--dark);display:flex;gap:8px}
+.detalle-cant{font-weight:700;color:var(--rojo);min-width:24px;text-align:right;flex-shrink:0}
+.andrea .detalle-cant{color:var(--azul)}
+
+.ficha-est{padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.est-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Barlow',sans-serif}
+.est-btn.ac-cotizacion{background:var(--yellow-light);border-color:var(--yellow);color:var(--yellow)}
+.est-btn.ac-confirmado{background:var(--azul-light);border-color:var(--azul);color:var(--azul)}
+.est-btn.ac-realizado{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.est-btn.ac-cancelado{background:var(--gray);border-color:#ccc;color:var(--muted)}
+
+.ficha-docs{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.docs-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:2px}
+.doc-btn{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);background:white;cursor:pointer;transition:all .15s;font-family:'Barlow',sans-serif;color:var(--dark)}
+.doc-btn:hover{transform:translateX(3px);box-shadow:0 4px 12px rgba(0,0,0,.07)}
+.doc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.doc-icon.contrato{background:var(--rojo-light)}
+.doc-icon.orden{background:var(--gray)}
+.doc-icon.bono{background:var(--green-light)}
+.doc-txt-name{font-weight:700;font-size:15px}
+.doc-txt-sub{font-size:12px;color:var(--muted)}
+.doc-arrow{margin-left:auto;color:var(--border);font-size:18px}
+
+.ficha-del{padding:10px 20px 4px;display:flex;justify-content:flex-end}
+.btn-del{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600;padding:6px 10px;border-radius:8px}
+.btn-del:hover{background:#FDEEEE;color:var(--rojo)}
+
+@media(max-width:480px){
+  .frow.c3{grid-template-columns:1fr 1fr}
+  .ficha-datos{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <img class="header-logo" src="logo_mudanzas.png" alt="" onerror="this.style.display='none'">
+    <span class="header-title">MUDANZAS <span>EXPRESS</span></span>
+  </div>
+  <button class="btn-nuevo" onclick="abrirNuevo()">＋ Nuevo servicio</button>
+</header>
+
+<div class="filtros">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="buscador" type="search" placeholder="Buscar cliente, dirección…" oninput="render()">
+  </div>
+  <div class="filter-chips">
+    <div class="chip active" onclick="setFiltro('todos',this)">Todos</div>
+    <div class="chip salvador" onclick="setFiltro('salvador',this)">Salvador</div>
+    <div class="chip andrea" onclick="setFiltro('andrea',this)">Andrea</div>
+    <div class="chip" onclick="setFiltro('confirmado',this)">Confirmados</div>
+    <div class="chip" onclick="setFiltro('realizado',this)">Realizados</div>
+  </div>
+</div>
+
+<div class="contadores">
+  <div>
+    <span class="cnt-total" id="cnt-total">0</span>
+    <span class="cnt-label"> servicios</span>
+  </div>
+  <div class="cnt-chips">
+    <span class="mini-chip s" id="cnt-s">S: 0</span>
+    <span class="mini-chip a" id="cnt-a">A: 0</span>
+  </div>
+</div>
+
+<div class="lista" id="lista"></div>
+<div class="empty" id="empty">
+  <div class="empty-icon">🚚</div>
+  <div class="empty-title">Sin servicios aún</div>
+  <div style="font-size:14px">Toca <b>+ Nuevo servicio</b> para comenzar</div>
+</div>
+
+<!-- ══ OVERLAY: NUEVO SERVICIO ══ -->
+<div class="overlay" id="ov-nuevo" onclick="bgClose('ov-nuevo',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title">Nuevo servicio</span>
+      <button class="sheet-close" onclick="cerrar('ov-nuevo')">✕</button>
+    </div>
+    <div class="sheet-body">
+
+      <!-- Vendedor -->
+      <div>
+        <span class="sec-lbl">Vendedor</span>
+        <div class="vendedor-grid">
+          <div class="vbtn salvador" id="vbtn-s" onclick="selVendedor('salvador')">
+            <span class="vbtn-name">Salvador</span>
+            <span class="vbtn-sub">Ortiz Cuevas · Scotiabank</span>
+          </div>
+          <div class="vbtn andrea" id="vbtn-a" onclick="selVendedor('andrea')">
+            <span class="vbtn-name">Andrea</span>
+            <span class="vbtn-sub">Rey · Mercado Pago</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Importar WhatsApp -->
+      <div class="wa-box">
+        <span class="wa-lbl">💬 Importar desde WhatsApp <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></span>
+        <textarea class="wa-area" id="wa-txt" placeholder="Pega aquí la conversación y extrae los datos automáticamente…"></textarea>
+        <button class="btn-wa" id="btn-extraer" onclick="extraerWA()">⚡ Extraer datos con IA</button>
+      </div>
+
+      <!-- Cliente -->
+      <div>
+        <span class="sec-lbl">Cliente</span>
+        <div class="frow c2">
+          <div class="ff"><label class="flbl">Nombre</label><input class="fi" id="f-nombre" placeholder="Carlos Martínez"></div>
+          <div class="ff"><label class="flbl">Teléfono / WhatsApp</label><input class="fi" id="f-tel" type="tel" placeholder="55 1412 0283"></div>
+        </div>
+      </div>
+
+      <!-- Servicio -->
+      <div>
+        <span class="sec-lbl">Servicio</span>
+        <div class="frow" style="margin-bottom:10px">
+          <div class="ff"><label class="flbl">Origen</label><input class="fi" id="f-origen" placeholder="Calle, colonia, alcaldía"></div>
+        </div>
+        <div class="frow" style="margin-bottom:10px">
+          <div class="ff"><label class="flbl">Destino</label><input class="fi" id="f-destino" placeholder="Calle, colonia, alcaldía"></div>
+        </div>
+        <div class="frow c3">
+          <div class="ff"><label class="flbl">Fecha</label><input class="fi" id="f-fecha" type="date"></div>
+          <div class="ff"><label class="flbl">Hora</label><input class="fi" id="f-hora" type="time"></div>
+          <div class="ff"><label class="flbl">Estatus</label>
+            <select class="fi" id="f-estatus">
+              <option value="cotizacion">Cotización</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="realizado">Realizado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalle del servicio (artículos a transportar) -->
+      <div>
+        <span class="sec-lbl">📦 Detalle del servicio — artículos a transportar</span>
+        <table class="detalle-tabla">
+          <thead>
+            <tr>
+              <th>Cant.</th>
+              <th>Descripción del artículo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="detalle-body"></tbody>
+        </table>
+        <button class="btn-add-item" onclick="addDetalleRow()">+ Agregar artículo</button>
+      </div>
+
+      <!-- Económico -->
+      <div>
+        <span class="sec-lbl">Acuerdo económico</span>
+        <div class="frow c2">
+          <div class="ff"><label class="flbl">Cuota acordada</label><input class="fi" id="f-cuota" placeholder="$4,500"></div>
+          <div class="ff"><label class="flbl">Anticipo acordado</label><input class="fi" id="f-anticipo" placeholder="$2,000 / 30% / etc."></div>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="ff">
+        <label class="flbl">Condiciones / notas acordadas</label>
+        <textarea class="fi fi-ta" id="f-notas" placeholder="Embalaje incluido, desmontaje, dos viajes…"></textarea>
+      </div>
+
+      <button class="btn-save" id="btn-save" onclick="guardar()">💾 Guardar servicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: FICHA ══ -->
+<div class="overlay" id="ov-ficha" onclick="bgClose('ov-ficha',event)">
+  <div class="sheet" style="max-height:96vh">
+    <div class="sheet-handle"></div>
+
+    <div class="ficha-hero" id="ficha-hero">
+      <button class="sheet-close" style="position:absolute;top:12px;right:16px" onclick="cerrar('ov-ficha')">✕</button>
+      <div class="ficha-nombre" id="ficha-nombre">—</div>
+      <div class="ficha-sub" id="ficha-sub">—</div>
+      <span class="ficha-tag" id="ficha-tag">—</span>
+    </div>
+
+    <div class="ficha-est" id="ficha-est"></div>
+    <div class="ficha-datos" id="ficha-datos"></div>
+
+    <div class="ficha-docs">
+      <div class="docs-lbl">Generar documentos</div>
+      <div class="doc-btn" onclick="irDoc('contrato')">
+        <div class="doc-icon contrato">📄</div>
+        <div>
+          <div class="doc-txt-name">Contrato</div>
+          <div class="doc-txt-sub" id="doc-sub-contrato">—</div>
+        </div>
+        <span class="doc-arrow">›</span>
+      </div>
+      <div class="doc-btn" onclick="irDoc('orden')">
+        <div class="doc-icon orden">📋</div>
+        <div>
+          <div class="doc-txt-name">Orden de Servicio</div>
+          <div class="doc-txt-sub">Inventario y detalles operativos</div>
+        </div>
+        <span class="doc-arrow">›</span>
+      </div>
+      <div class="doc-btn" onclick="irDoc('bono')">
+        <div class="doc-icon bono">🎁</div>
+        <div>
+          <div class="doc-txt-name">Bono de descuento</div>
+          <div class="doc-txt-sub">10% · transferible · sin vencimiento</div>
+        </div>
+        <span class="doc-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="ficha-del">
+      <button class="btn-del" onclick="eliminar()">🗑 Eliminar servicio</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'mex_servicios_v2';
+let servicios = [];
+let filtro = 'todos';
+let activo = null;
+let vendedor = null;
+
+function load() {
+  try { servicios = JSON.parse(localStorage.getItem(KEY)) || []; } catch { servicios = []; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(servicios)); }
+
+/* ── RENDER LISTA ── */
+function render() {
+  const q = document.getElementById('buscador').value.toLowerCase();
+  let lista = [...servicios].sort((a,b) => new Date(b.creado) - new Date(a.creado));
+
+  if (filtro === 'salvador' || filtro === 'andrea') lista = lista.filter(s => s.vendedor === filtro);
+  else if (filtro !== 'todos') lista = lista.filter(s => s.estatus === filtro);
+  if (q) lista = lista.filter(s =>
+    (s.nombre||'').toLowerCase().includes(q) ||
+    (s.origen||'').toLowerCase().includes(q) ||
+    (s.destino||'').toLowerCase().includes(q) ||
+    (s.tel||'').includes(q)
+  );
+
+  document.getElementById('cnt-total').textContent = lista.length;
+  document.getElementById('cnt-s').textContent = 'S: ' + lista.filter(s=>s.vendedor==='salvador').length;
+  document.getElementById('cnt-a').textContent = 'A: ' + lista.filter(s=>s.vendedor==='andrea').length;
+
+  const el = document.getElementById('lista');
+  const empty = document.getElementById('empty');
+  if (!lista.length) { el.innerHTML = ''; empty.classList.add('visible'); return; }
+  empty.classList.remove('visible');
+
+  el.innerHTML = lista.map(s => {
+    const ini = (s.nombre||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const fecha = s.fecha ? fmtFecha(s.fecha) : fmtFecha((s.creado||'').split('T')[0]);
+    const nItems = (s.detalle||[]).filter(d=>d.descripcion).length;
+    return `<div class="card ${s.vendedor}" onclick="abrirFicha('${s.id}')">
+      <div class="card-av ${s.vendedor}">${ini}</div>
+      <div class="card-body">
+        <div class="card-nombre">${s.nombre||'Sin nombre'}</div>
+        <div class="card-ruta">${s.origen?`<span>${s.origen.split(',')[0]}</span> → `:''} ${s.destino?s.destino.split(',')[0]:'—'}${nItems?` · ${nItems} art.`:''}</div>
+      </div>
+      <div class="card-right">
+        <div class="card-fecha">${fecha}</div>
+        <div class="card-monto">${s.cuota||'—'}</div>
+        <span class="badge badge-${s.estatus||'cotizacion'}">${lblEst(s.estatus)}</span>
+      </div>
+      <span class="card-arrow">›</span>
+    </div>`;
+  }).join('');
+}
+
+function setFiltro(f, el) {
+  filtro = f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function lblEst(e) {
+  return {cotizacion:'Cotización',confirmado:'Confirmado',realizado:'Realizado',cancelado:'Cancelado'}[e||'cotizacion'];
+}
+function fmtFecha(f) {
+  if (!f || f === 'undefined') return '—';
+  const p = f.split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : '—';
+}
+
+/* ── TABLA DETALLE ── */
+function addDetalleRow(cant='1', desc='') {
+  const tbody = document.getElementById('detalle-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="td-cant"><input class="fi det-cant" type="number" min="1" value="${cant}" style="width:58px;text-align:center;padding:6px 8px"></td>
+    <td class="td-desc"><input class="fi det-desc" type="text" value="${desc}" placeholder="Ej. 2 camas matrimoniales" style="padding:6px 10px"></td>
+    <td class="td-del"><button onclick="this.closest('tr').remove()" title="Eliminar">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelector('.det-desc').focus();
+}
+
+function getDetalle() {
+  return Array.from(document.querySelectorAll('#detalle-body tr')).map(tr => ({
+    cantidad: tr.querySelector('.det-cant')?.value || '1',
+    descripcion: tr.querySelector('.det-desc')?.value?.trim() || ''
+  })).filter(d => d.descripcion);
+}
+
+function limpiarDetalle() {
+  document.getElementById('detalle-body').innerHTML = '';
+}
+
+/* ── NUEVO SERVICIO ── */
+function abrirNuevo() {
+  vendedor = null;
+  ['vbtn-s','vbtn-a'].forEach(id => document.getElementById(id).classList.remove('sel'));
+  ['f-nombre','f-tel','f-origen','f-destino','f-hora','f-cuota','f-anticipo','f-notas','wa-txt'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-estatus').value = 'cotizacion';
+  limpiarDetalle();
+  updSaveBtn();
+  document.getElementById('ov-nuevo').classList.add('open');
+}
+
+function selVendedor(v) {
+  vendedor = v;
+  document.getElementById('vbtn-s').classList.toggle('sel', v==='salvador');
+  document.getElementById('vbtn-a').classList.toggle('sel', v==='andrea');
+  updSaveBtn();
+}
+function updSaveBtn() {
+  const btn = document.getElementById('btn-save');
+  btn.className = 'btn-save' + (vendedor ? ' '+vendedor : '');
+}
+
+function guardar() {
+  if (!vendedor) { alert('Elige el vendedor primero'); return; }
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { alert('El nombre del cliente es obligatorio'); return; }
+  const s = {
+    id: 'srv_'+Date.now(),
+    creado: new Date().toISOString(),
+    vendedor,
+    nombre,
+    tel: document.getElementById('f-tel').value.trim(),
+    origen: document.getElementById('f-origen').value.trim(),
+    destino: document.getElementById('f-destino').value.trim(),
+    fecha: document.getElementById('f-fecha').value,
+    hora: document.getElementById('f-hora').value,
+    estatus: document.getElementById('f-estatus').value,
+    cuota: document.getElementById('f-cuota').value.trim(),
+    anticipo: document.getElementById('f-anticipo').value.trim(),
+    notas: document.getElementById('f-notas').value.trim(),
+    detalle: getDetalle(),
+  };
+  servicios.unshift(s);
+  save();
+  cerrar('ov-nuevo');
+  render();
+  setTimeout(() => abrirFicha(s.id), 320);
+}
+
+/* ── WHATSAPP EXTRACT ── */
+async function extraerWA() {
+  const texto = document.getElementById('wa-txt').value.trim();
+  if (!texto) { alert('Pega primero el texto de WhatsApp'); return; }
+  const btn = document.getElementById('btn-extraer');
+  btn.disabled = true; btn.textContent = '⏳ Extrayendo…';
+  try {
+    const res = await fetch('/.netlify/functions/extract', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({texto})
+    });
+    const d = await res.json();
+    if (d.nombre)   document.getElementById('f-nombre').value  = d.nombre;
+    if (d.telefono) document.getElementById('f-tel').value     = d.telefono;
+    if (d.origen)   document.getElementById('f-origen').value  = d.origen;
+    if (d.destino)  document.getElementById('f-destino').value = d.destino;
+    if (d.fecha)    document.getElementById('f-fecha').value   = d.fecha;
+    if (d.hora)     document.getElementById('f-hora').value    = d.hora;
+    if (d.cuota)    document.getElementById('f-cuota').value   = d.cuota;
+    if (d.anticipo) document.getElementById('f-anticipo').value = d.anticipo;
+    if (d.notas)    document.getElementById('f-notas').value   = d.notas;
+    // ── Llenar tabla de detalle ──
+    if (d.detalle?.length) {
+      limpiarDetalle();
+      d.detalle.forEach(item => addDetalleRow(item.cantidad||'1', item.descripcion||''));
+    }
+    btn.textContent = '✓ Datos extraídos';
+  } catch(e) {
+    btn.textContent = '⚡ Extraer datos con IA';
+    alert('Error al extraer. Verifica que CLAUDE_API_KEY esté configurada en Netlify.');
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '⚡ Extraer datos con IA'; }, 3000);
+  }
+}
+
+/* ── FICHA ── */
+function abrirFicha(id) {
+  const s = servicios.find(x => x.id === id);
+  if (!s) return;
+  activo = s;
+
+  document.getElementById('ficha-hero').className = 'ficha-hero ' + s.vendedor;
+  document.getElementById('ficha-nombre').textContent = s.nombre || '—';
+  document.getElementById('ficha-sub').textContent =
+    [s.fecha ? fmtFecha(s.fecha) : '', s.hora].filter(Boolean).join(' · ') || 'Sin fecha';
+  document.getElementById('ficha-tag').textContent =
+    s.vendedor === 'salvador' ? 'Salvador Ortiz Cuevas' : 'Andrea Rey';
+
+  renderEst();
+
+  // Construir sección de datos
+  const detalle = (s.detalle||[]).filter(d=>d.descripcion);
+  const detalleHtml = detalle.length
+    ? `<div class="detalle-lista">${detalle.map(d=>`<div class="detalle-item"><span class="detalle-cant">${d.cantidad}</span><span>${d.descripcion}</span></div>`).join('')}</div>`
+    : '<span style="color:var(--muted);font-size:13px">Sin artículos capturados</span>';
+
+  const datos = [
+    ['Teléfono', s.tel||'—', false],
+    ['Cuota', s.cuota||'—', false],
+    ['Anticipo', s.anticipo||'—', false],
+    ['Vendedor', s.vendedor==='salvador'?'Salvador':'Andrea', false],
+    s.origen  ? ['Origen',  s.origen,  true] : null,
+    s.destino ? ['Destino', s.destino, true] : null,
+    s.notas   ? ['Notas',   s.notas,   true] : null,
+    ['📦 Artículos a transportar', detalleHtml, true],
+  ].filter(Boolean);
+
+  document.getElementById('ficha-datos').innerHTML = datos.map(([l,v,f]) =>
+    `<div class="dato${f?' dato-full':''}"><div class="dato-lbl">${l}</div><div class="dato-val">${v}</div></div>`
+  ).join('');
+
+  document.getElementById('doc-sub-contrato').textContent =
+    s.vendedor === 'andrea' ? 'Plantilla 2 · Cláusulas completas' : 'Plantilla 1 · Básico · Scotiabank';
+
+  document.getElementById('ov-ficha').classList.add('open');
+}
+
+function renderEst() {
+  const ests = ['cotizacion','confirmado','realizado','cancelado'];
+  document.getElementById('ficha-est').innerHTML = ests.map(e =>
+    `<button class="est-btn${activo.estatus===e?' ac-'+e:''}" onclick="cambiarEst('${e}')">${lblEst(e)}</button>`
+  ).join('');
+}
+
+function cambiarEst(e) {
+  activo.estatus = e;
+  const i = servicios.findIndex(s => s.id === activo.id);
+  if (i >= 0) servicios[i] = activo;
+  save(); render(); renderEst();
+}
+
+function irDoc(tipo) {
+  // Guardar servicio activo en sessionStorage para que los documentos lo lean
+  sessionStorage.setItem('mex_srv', JSON.stringify(activo));
+  const urls = {
+    contrato: 'contrato.html',
+    orden: `orden.html?rep=${activo.vendedor}`,
+    bono: activo.vendedor === 'andrea' ? 'Bono_Azul.html' : 'Bono_rojo.html',
+  };
+  window.location.href = urls[tipo];
+}
+
+function eliminar() {
+  if (!confirm(`¿Eliminar el servicio de ${activo.nombre}? Esta acción no se puede deshacer.`)) return;
+  servicios = servicios.filter(s => s.id !== activo.id);
+  save(); cerrar('ov-ficha'); render();
+}
+
+function cerrar(id) { document.getElementById(id).classList.remove('open'); }
+function bgClose(id, e) { if (e.target.id === id) cerrar(id); }
+
+load(); render();
+</script>
+</body>
+</html>

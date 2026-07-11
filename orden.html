@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orden de Servicio — Mudanzas Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--acc:#E8391A;--acc-dark:#C02E13;--acc-light:#FAECE7;--azul:#1B3F7A;--azul-light:#E8EEF8;--dark:#111;--mid:#444;--muted:#888;--border:#E0DDD8;--bg:#F5F4F2;--white:#FFF;--green:#1E8A4A;--green-light:#E6F4EC;--yellow:#B07800;--yellow-light:#FFF8E1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--dark)}
+.nav{background:white;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-logo{height:30px;border-radius:50%}
+.nav-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px}
+.nav-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em}
+.nav-badge.rojo{background:var(--acc-light);color:var(--acc)}
+.nav-badge.azul{background:var(--azul-light);color:var(--azul)}
+.main{max-width:720px;margin:0 auto;padding:20px 16px 100px;display:flex;flex-direction:column;gap:14px}
+.section{background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.sec-hdr{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sec-icon{font-size:17px}
+.sec-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mid)}
+.sec-body{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.row{display:grid;gap:10px}
+.c2{grid-template-columns:1fr 1fr}
+.c3{grid-template-columns:1fr 1fr 1fr}
+.ff{display:flex;flex-direction:column;gap:4px}
+.flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.fi{border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:14px;font-family:'Barlow',sans-serif;color:var(--dark);background:white;outline:none;width:100%;transition:border-color .15s}
+.fi:focus{border-color:var(--acc)}
+select.fi{cursor:pointer}
+.fi-ta{min-height:70px;resize:vertical;line-height:1.5}
+/* INVENTARIO */
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.inv-item{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;background:#FAFAFA;cursor:pointer;transition:all .15s;user-select:none}
+.inv-item:hover{border-color:var(--acc);background:var(--acc-light)}
+.inv-item.checked{border-color:var(--acc);background:var(--acc-light)}
+.inv-chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s}
+.inv-item.checked .inv-chk{background:var(--acc);border-color:var(--acc);color:white}
+.inv-lbl{font-size:13px;font-weight:600;flex:1}
+.inv-qty{width:44px;padding:4px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:'Barlow',sans-serif;text-align:center;background:white;outline:none;display:none}
+.inv-item.checked .inv-qty{display:block}
+/* MEDIDAS */
+.med-table{width:100%;border-collapse:collapse;font-size:13px}
+.med-table th{background:#F5F4F2;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--border)}
+.med-table td{padding:6px 8px;border-bottom:1px solid #F0EDEA;vertical-align:middle}
+.med-table td:first-child{font-weight:600;color:var(--mid)}
+.med-table .fi{padding:5px 8px;font-size:12px;border-radius:6px}
+/* ACCIONES */
+.actions{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;max-width:720px;margin:0 auto}
+.btn{flex:1;padding:13px;border:none;border-radius:10px;font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-print{background:var(--acc);color:white}
+.btn-print:hover{background:var(--acc-dark)}
+.btn-print.azul{background:var(--azul)}
+.btn-print.azul:hover{background:#122B55}
+.btn-back{background:#F0EDE8;color:var(--mid);flex:0 0 auto;padding:13px 18px}
+.btn-back:hover{background:var(--border)}
+.folio-box{background:var(--acc-light);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--acc);display:none}
+.folio-box.azul{background:var(--azul-light);color:var(--azul)}
+/* PRINT */
+@media print{.nav,.actions{display:none!important}body{background:white}.main{padding:0;max-width:100%}.section{border:1px solid #ccc;border-radius:0;page-break-inside:avoid;margin-bottom:12px}.print-hdr{display:flex!important}}
+.print-hdr{display:none;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--acc)}
+.print-hdr.azul{border-color:var(--azul)}
+@media(max-width:480px){.c3{grid-template-columns:1fr 1fr}.inv-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-left">
+    <img class="nav-logo" src="logo_mudanzas.png" alt="" onerror="this.style.display='none'">
+    <span class="nav-title">Orden de Servicio</span>
+  </div>
+  <span class="nav-badge" id="rep-badge">—</span>
+</nav>
+
+<div class="main">
+
+  <div class="print-hdr" id="print-hdr">
+    <div><img src="logo_mudanzas.png" style="height:48px" alt="Mudanzas Express"></div>
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px">ORDEN DE SERVICIO</div>
+      <div style="font-size:11px;color:#888">Mudanzas Express · Petén 227, Narvarte CDMX · 55 3111 3181</div>
+    </div>
+    <div style="font-size:11px;color:#888;text-align:right" id="print-folio"></div>
+  </div>
+
+  <div class="folio-box" id="folio-box"></div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">👤</span><span class="sec-title">Datos del Cliente</span></div>
+    <div class="sec-body">
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Nombre completo</label><input class="fi" id="c-nombre" placeholder="Carlos Martínez"></div>
+        <div class="ff"><label class="flbl">Teléfono / WhatsApp</label><input class="fi" id="c-tel" type="tel" placeholder="55 1412 0283"></div>
+      </div>
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Fecha de mudanza</label><input class="fi" id="c-fecha" type="date"></div>
+        <div class="ff"><label class="flbl">Hora de inicio</label><input class="fi" id="c-hora" type="time"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">📍</span><span class="sec-title">Origen y Destino</span></div>
+    <div class="sec-body">
+      <div class="ff"><label class="flbl">Dirección de origen</label><input class="fi" id="o-dir" placeholder="Calle, número, colonia, alcaldía"></div>
+      <div class="row c3">
+        <div class="ff"><label class="flbl">Piso origen</label><input class="fi" id="o-piso" placeholder="PB / 3°"></div>
+        <div class="ff"><label class="flbl">Elevador</label><select class="fi" id="o-elev"><option value="">—</option><option>Sí</option><option>No</option></select></div>
+        <div class="ff"><label class="flbl">Estacionamiento</label><select class="fi" id="o-estac"><option value="">—</option><option>Libre</option><option>Restringido</option><option>Solo carga</option></select></div>
+      </div>
+      <div class="ff"><label class="flbl">Dirección de destino</label><input class="fi" id="d-dir" placeholder="Calle, número, colonia, alcaldía"></div>
+      <div class="row c3">
+        <div class="ff"><label class="flbl">Piso destino</label><input class="fi" id="d-piso" placeholder="PB / 2°"></div>
+        <div class="ff"><label class="flbl">Elevador</label><select class="fi" id="d-elev"><option value="">—</option><option>Sí</option><option>No</option></select></div>
+        <div class="ff"><label class="flbl">Estacionamiento</label><select class="fi" id="d-estac"><option value="">—</option><option>Libre</option><option>Restringido</option><option>Solo carga</option></select></div>
+      </div>
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Distancia aprox. (km)</label><input class="fi" id="distancia" placeholder="12"></div>
+        <div class="ff"><label class="flbl">Tiempo estimado</label><input class="fi" id="tiempo" placeholder="4 horas"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">🚛</span><span class="sec-title">Vehículo y Personal</span></div>
+    <div class="sec-body">
+      <div class="row c3">
+        <div class="ff"><label class="flbl">Tipo de vehículo</label>
+          <select class="fi" id="v-tipo">
+            <option value="">Seleccionar</option>
+            <option>Camioneta 3.5 ton</option><option>Torton 8 ton</option><option>Rabón 6 ton</option>
+            <option>Camioneta chica</option><option>Dos vehículos</option>
+          </select>
+        </div>
+        <div class="ff"><label class="flbl">Placas</label><input class="fi" id="v-placas" placeholder="ABC-1234"></div>
+        <div class="ff"><label class="flbl">No. cargadores</label><input class="fi" id="p-num" type="number" placeholder="3" min="1" max="10"></div>
+      </div>
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Chofer / Responsable</label><input class="fi" id="p-chofer" placeholder="Nombre del chofer"></div>
+        <div class="ff"><label class="flbl">Ayudantes</label><input class="fi" id="p-ayudantes" placeholder="Juan, Pedro, Luis"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">📦</span><span class="sec-title">Inventario de Artículos</span></div>
+    <div class="sec-body">
+      <div class="inv-grid" id="inv-grid"></div>
+      <div class="ff" style="margin-top:4px">
+        <label class="flbl">Artículos adicionales / especiales</label>
+        <textarea class="fi fi-ta" id="inv-extra" placeholder="Piano vertical, caja fuerte 80kg, acuario 200L…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">📐</span><span class="sec-title">Medidas de Artículos Clave</span></div>
+    <div class="sec-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Solo para artículos que requieren maniobra especial o desmontaje.</p>
+      <table class="med-table">
+        <thead><tr><th>Artículo</th><th>Alto cm</th><th>Ancho cm</th><th>Prof. cm</th><th>Notas</th></tr></thead>
+        <tbody id="med-body"></tbody>
+      </table>
+      <button onclick="addMedRow()" style="margin-top:8px;background:#F5F4F2;border:1.5px dashed var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;width:100%">+ Agregar fila</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><span class="sec-icon">⚠️</span><span class="sec-title">Condiciones Especiales Acordadas</span></div>
+    <div class="sec-body">
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Embalaje incluido</label><select class="fi" id="cond-emb"><option value="">—</option><option>Sí, incluido</option><option>No incluido</option><option>Parcial</option></select></div>
+        <div class="ff"><label class="flbl">Desmontaje / Montaje</label><select class="fi" id="cond-des"><option value="">—</option><option>Incluido</option><option>No incluido</option><option>Solo desmontaje</option><option>Solo montaje</option></select></div>
+      </div>
+      <div class="row c2">
+        <div class="ff"><label class="flbl">Cuota acordada</label><input class="fi" id="cond-cuota" placeholder="$4,500"></div>
+        <div class="ff"><label class="flbl">Anticipo acordado</label><input class="fi" id="cond-ant" placeholder="$2,000 / 30% / etc."></div>
+      </div>
+      <div class="ff"><label class="flbl">Condiciones adicionales</label><textarea class="fi fi-ta" id="cond-notas" placeholder="Dos viajes, acceso 8am–6pm, cliente provee cajas…" rows="3"></textarea></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="actions">
+  <button class="btn btn-back" onclick="window.location.href='index.html'">← Servicios</button>
+  <button class="btn btn-print" id="btn-imprimir" onclick="imprimir()">🖨️ Imprimir / PDF</button>
+</div>
+
+<script>
+// ── Rep desde URL o sessionStorage ──
+const params = new URLSearchParams(location.search);
+const srv = (() => { try { return JSON.parse(sessionStorage.getItem('mex_srv')); } catch { return null; } })();
+const rep = params.get('rep') || srv?.vendedor || 'salvador';
+const esAndrea = rep === 'andrea';
+
+const badge = document.getElementById('rep-badge');
+const btnImp = document.getElementById('btn-imprimir');
+const folioBox = document.getElementById('folio-box');
+
+if (esAndrea) {
+  badge.textContent = 'Andrea Rey'; badge.classList.add('azul');
+  document.documentElement.style.setProperty('--acc','#1B3F7A');
+  document.documentElement.style.setProperty('--acc-dark','#122B55');
+  document.documentElement.style.setProperty('--acc-light','#E8EEF8');
+  btnImp.classList.add('azul');
+  folioBox.classList.add('azul');
+  document.getElementById('print-hdr').classList.add('azul');
+} else {
+  badge.textContent = 'Salvador Ortiz Cuevas'; badge.classList.add('rojo');
+}
+
+// ── Generar folio ──
+const hoy = new Date();
+const folio = (esAndrea ? 'A' : 'S') +
+  hoy.getFullYear().toString().slice(-2) +
+  String(hoy.getMonth()+1).padStart(2,'0') +
+  String(hoy.getDate()).padStart(2,'0') + '-' +
+  String(Math.floor(Math.random()*900)+100);
+folioBox.textContent = 'Folio: ' + folio;
+folioBox.style.display = 'block';
+document.getElementById('print-folio').textContent = 'Folio: ' + folio + ' · ' + hoy.toLocaleDateString('es-MX');
+
+// ── Prefill desde servicio ──
+document.getElementById('c-fecha').value = new Date().toISOString().split('T')[0];
+if (srv) {
+  document.getElementById('c-nombre').value = srv.nombre || '';
+  document.getElementById('c-tel').value    = srv.tel    || '';
+  document.getElementById('o-dir').value    = srv.origen || '';
+  document.getElementById('d-dir').value    = srv.destino|| '';
+  if (srv.fecha) document.getElementById('c-fecha').value = srv.fecha;
+  if (srv.hora)  document.getElementById('c-hora').value  = srv.hora;
+  if (srv.cuota) document.getElementById('cond-cuota').value = srv.cuota;
+  if (srv.anticipo) document.getElementById('cond-ant').value = srv.anticipo;
+  if (srv.notas) document.getElementById('cond-notas').value = srv.notas;
+}
+
+// ── Inventario ──
+const catalogo = [
+  'Cama matrimonial','Cama individual','Cama king/queen',
+  'Sala (sillones)','Sillón individual','Love seat',
+  'Comedor (mesa+sillas)','Barra cocina','Mesa centro',
+  'Refrigerador','Lavadora','Secadora',
+  'Estufa','Microondas','Lavavajillas',
+  'TV hasta 55"','TV 55" o más','Consola/equipo audio',
+  'Escritorio','Silla oficina','Librero',
+  'Closet / Ropero','Chest de cajones','Cómoda',
+  'Cajas medianas','Cajas grandes','Bolsas',
+  'Plantas','Bicicleta','Moto / scooter',
+];
+const grid = document.getElementById('inv-grid');
+catalogo.forEach((art, i) => {
+  const div = document.createElement('div');
+  div.className = 'inv-item';
+  div.innerHTML = `<div class="inv-chk">✓</div><span class="inv-lbl">${art}</span><input class="inv-qty" type="number" min="1" max="99" value="1">`;
+  div.addEventListener('click', function(e) { if (e.target.classList.contains('inv-qty')) return; this.classList.toggle('checked'); });
+  grid.appendChild(div);
+});
+
+// ── Medidas ──
+const artMed = ['Refrigerador','Lavadora','Closet / Ropero','TV grande','Sofá/Sala','Cama'];
+const tbody = document.getElementById('med-body');
+artMed.forEach(art => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${art}</td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="text" class="fi" placeholder="—"></td>`;
+  tbody.appendChild(tr);
+});
+function addMedRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" class="fi" placeholder="Artículo"></td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="number" class="fi" placeholder="—" min="0"></td><td><input type="text" class="fi" placeholder="—"></td>`;
+  tbody.appendChild(tr);
+}
+
+// ── Imprimir ──
+function imprimir() { window.print(); }
+</script>
+</body>
+</html>

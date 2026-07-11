@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orden de Servicio — Mudanzas Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #E8391A;
+  --accent-dark: #C02E13;
+  --accent-light: #FAECE7;
+  --azul: #1B3F7A;
+  --azul-light: #E8EEF8;
+  --dark: #111;
+  --mid: #444;
+  --muted: #888;
+  --border: #E0DDD8;
+  --bg: #F5F4F2;
+  --white: #FFFFFF;
+  --naranja: #E87722;
+  --green: #1E8A4A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--dark); }
+
+/* ── NAV ── */
+.nav {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo img { height: 32px; border-radius: 50%; }
+.nav-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--dark);
+}
+.nav-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.nav-badge.rojo { background: var(--accent-light); color: var(--accent); }
+.nav-badge.azul { background: var(--azul-light); color: var(--azul); }
+
+/* ── MAIN ── */
+.main { max-width: 720px; margin: 0 auto; padding: 24px 16px 100px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ── SECTION ── */
+.section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.section-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-icon { font-size: 18px; }
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.section-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ── FORM ── */
+.row { display: grid; gap: 10px; }
+.row.c2 { grid-template-columns: 1fr 1fr; }
+.row.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.row.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+}
+input, select, textarea {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  font-family: 'Barlow', sans-serif;
+  color: var(--dark);
+  background: white;
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+/* ── INVENTARIO ── */
+.inv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.inv-item {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FAFAFA;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+.inv-item:hover { border-color: var(--accent); background: var(--accent-light); }
+.inv-item.checked { border-color: var(--accent); background: var(--accent-light); }
+.inv-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.inv-item.checked .inv-check { background: var(--accent); border-color: var(--accent); color: white; }
+.inv-label { font-size: 13px; font-weight: 600; flex: 1; }
+.inv-count {
+  width: 44px;
+  padding: 4px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Barlow', sans-serif;
+  text-align: center;
+  background: white;
+  outline: none;
+  display: none;
+}
+.inv-item.checked .inv-count { display: block; }
+
+.inv-extra {
+  margin-top: 4px;
+}
+.inv-extra input {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+/* ── MEDIDAS ── */
+.medidas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.medidas-table th {
+  background: #F5F4F2;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.medidas-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #F0EDEA;
+  vertical-align: middle;
+}
+.medidas-table td:first-child { font-weight: 600; color: var(--mid); }
+.medidas-table input {
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* ── BOTONES ACCIÓN ── */
+.actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.btn {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-print { background: var(--accent); color: white; }
+.btn-print:hover { background: var(--accent-dark); }
+.btn-print.azul-btn { background: var(--azul); }
+.btn-print.azul-btn:hover { background: #122B55; }
+.btn-back { background: #F0EDEA; color: var(--mid); flex: 0 0 auto; padding: 13px 18px; }
+.btn-back:hover { background: var(--border); }
+
+/* ── PRINT ── */
+@media print {
+  .nav, .actions, .btn, .inv-count, .section-header .section-icon { color: black !important; }
+  .nav, .actions { display: none !important; }
+  body { background: white; }
+  .main { padding: 0; max-width: 100%; }
+  .section { border: 1px solid #ccc; border-radius: 0; page-break-inside: avoid; margin-bottom: 12px; }
+  .print-header { display: flex !important; }
+}
+.print-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--accent);
+}
+.print-logo img { height: 48px; }
+.print-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; }
+.print-folio { font-size: 12px; color: var(--muted); }
+
+/* ── RESUMEN ── */
+.resumen-box {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  border-radius: 12px;
+  padding: 16px 18px;
+  color: white;
+  display: none;
+}
+.resumen-box.azul-box {
+  background: linear-gradient(135deg, var(--azul) 0%, #122B55 100%);
+}
+.resumen-box.visible { display: block; }
+.resumen-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.resumen-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.resumen-tag {
+  background: rgba(255,255,255,.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .row.c3, .row.c4 { grid-template-columns: 1fr 1fr; }
+  .inv-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <img src="logo_mudanzas.png" alt="Logo" onerror="this.style.display='none'">
+    </div>
+    <span class="nav-title">Orden de Servicio</span>
+  </div>
+  <span class="nav-badge" id="rep-badge">— Rep</span>
+</nav>
+
+<div class="main">
+
+  <!-- PRINT HEADER (solo impresión) -->
+  <div class="print-header">
+    <div class="print-logo"><img src="logo_mudanzas.png" alt="Mudanzas Express"></div>
+    <div>
+      <div class="print-title">ORDEN DE SERVICIO</div>
+      <div class="print-folio">Mudanzas Express · Petén 227, Narvarte CDMX · Tel: 55 3111 3181</div>
+    </div>
+    <div class="print-folio" id="print-folio-date"></div>
+  </div>
+
+  <!-- CLIENTE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">👤</span>
+      <span class="section-title">Datos del Cliente</span>
+    </div>
+    <div class="section-body">
+      <div class="row c2">
+        <div class="field">
+          <label>Nombre completo</label>
+          <input type="text" id="cliente-nombre" placeholder="Carlos Martínez">
+        </div>
+        <div class="field">
+          <label>Teléfono / WhatsApp</label>
+          <input type="tel" id="cliente-tel" placeholder="55 1412 0283">
+        </div>
+      </div>
+      <div class="row c2">
+        <div class="field">
+          <label>Fecha de mudanza</label>
+          <input type="date" id="fecha">
+        </div>
+        <div class="field">
+          <label>Hora de inicio</label>
+          <input type="time" id="hora">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORIGEN / DESTINO -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📍</span>
+      <span class="section-title">Origen y Destino</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Dirección de origen</label>
+        <input type="text" id="origen" placeholder="Calle, número, colonia, alcaldía">
+      </div>
+      <div class="row c3">
+        <div class="field">
+          <label>Piso origen</label>
+          <input type="text" id="origen-piso" placeholder="PB / 3°">
+        </div>
+        <div class="field">
+          <label>Elevador</label>
+          <select id="origen-elev">
+            <option value="">—</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estacionamiento</label>
+          <select id="origen-estac">
+            <option value="">—</option>
+            <option>Libre</option>
+            <option>Restringido</option>
+            <option>Solo carga</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Dirección de destino</label>
+        <input type="text" id="destino" placeholder="Calle, número, colonia, alcaldía">
+      </div>
+      <div class="row c3">
+        <div class="field">
+          <label>Piso destino</label>
+          <input type="text" id="destino-piso" placeholder="PB / 2°">
+        </div>
+        <div class="field">
+          <label>Elevador</label>
+          <select id="destino-elev">
+            <option value="">—</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estacionamiento</label>
+          <select id="destino-estac">
+            <option value="">—</option>
+            <option>Libre</option>
+            <option>Restringido</option>
+            <option>Solo carga</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row c2">
+        <div class="field">
+          <label>Distancia aprox. (km)</label>
+          <input type="text" id="distancia" placeholder="12">
+        </div>
+        <div class="field">
+          <label>Tiempo estimado</label>
+          <input type="text" id="tiempo-est" placeholder="4 horas">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VEHÍCULO Y PERSONAL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🚛</span>
+      <span class="section-title">Vehículo y Personal</span>
+    </div>
+    <div class="section-body">
+      <div class="row c3">
+        <div class="field">
+          <label>Tipo de vehículo</label>
+          <select id="vehiculo-tipo">
+            <option value="">Seleccionar</option>
+            <option>Camioneta 3.5 ton</option>
+            <option>Torton 8 ton</option>
+            <option>Rabón 6 ton</option>
+            <option>Camioneta chica</option>
+            <option>Dos vehículos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Placas</label>
+          <input type="text" id="vehiculo-placas" placeholder="ABC-1234">
+        </div>
+        <div class="field">
+          <label>No. de cargadores</label>
+          <input type="number" id="personal-num" placeholder="3" min="1" max="10">
+        </div>
+      </div>
+      <div class="row c2">
+        <div class="field">
+          <label>Chofer / Responsable</label>
+          <input type="text" id="personal-chofer" placeholder="Nombre del chofer">
+        </div>
+        <div class="field">
+          <label>Ayudantes (nombres)</label>
+          <input type="text" id="personal-ayudantes" placeholder="Juan, Pedro, Luis">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTARIO -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📦</span>
+      <span class="section-title">Inventario de Artículos</span>
+    </div>
+    <div class="section-body">
+      <div class="inv-grid" id="inv-grid">
+        <!-- generado por JS -->
+      </div>
+      <div class="inv-extra">
+        <label style="margin-bottom:6px;display:block">Artículos adicionales / especiales</label>
+        <textarea id="inv-extra" placeholder="Ej: Piano vertical, caja fuerte 80kg, acuario 200L…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDIDAS CLAVE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📐</span>
+      <span class="section-title">Medidas de Artículos Clave</span>
+    </div>
+    <div class="section-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Llenar solo para artículos que requieren maniobra especial o desmontaje.</p>
+      <table class="medidas-table" id="medidas-table">
+        <thead>
+          <tr>
+            <th>Artículo</th>
+            <th>Alto (cm)</th>
+            <th>Ancho (cm)</th>
+            <th>Prof. (cm)</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody id="medidas-body">
+          <!-- generado por JS -->
+        </tbody>
+      </table>
+      <button onclick="addMedidaRow()" style="margin-top:8px;background:#F5F4F2;border:1.5px dashed var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;width:100%;">+ Agregar fila</button>
+    </div>
+  </div>
+
+  <!-- CONDICIONES ESPECIALES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">⚠️</span>
+      <span class="section-title">Condiciones Especiales Acordadas</span>
+    </div>
+    <div class="section-body">
+      <div class="row c2">
+        <div class="field">
+          <label>Embalaje incluido</label>
+          <select id="cond-embalaje">
+            <option value="">—</option>
+            <option>Sí, incluido</option>
+            <option>No incluido</option>
+            <option>Parcial</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Desmontaje / Montaje</label>
+          <select id="cond-desmontaje">
+            <option value="">—</option>
+            <option>Incluido</option>
+            <option>No incluido</option>
+            <option>Solo desmontaje</option>
+            <option>Solo montaje</option>
+          </select>
+        </div>
+      </div>
+      <div class="row c2">
+        <div class="field">
+          <label>Cuota acordada ($)</label>
+          <input type="text" id="cond-cuota" placeholder="4,500">
+        </div>
+        <div class="field">
+          <label>Anticipo acordado</label>
+          <input type="text" id="cond-anticipo" placeholder="Ej: $3,000 / 30% / $2,500 = 25%">
+        </div>
+      </div>
+      <div class="field">
+        <label>Condiciones / acuerdos adicionales</label>
+        <textarea id="cond-notas" placeholder="Ej: Cliente proporciona cajas. No se llevan plantas. Mudanza en dos viajes. Acceso disponible de 8am a 6pm…" rows="4"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN (visible al generar) -->
+  <div class="resumen-box" id="resumen-box">
+    <div class="resumen-title">📋 Orden generada</div>
+    <div class="resumen-items" id="resumen-items"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTONES FIJOS -->
+<div class="actions">
+  <button class="btn btn-back" onclick="window.location.href='MenuAdmin.html'">← Menú</button>
+  <button class="btn btn-print" id="btn-imprimir" onclick="imprimirOrden()">🖨️ Imprimir / PDF</button>
+</div>
+
+<script>
+// ── Rep desde URL ──
+const params = new URLSearchParams(location.search);
+const rep = params.get('rep') || localStorage.getItem('mudanzas_rep') || 'salvador';
+const esAndrea = rep === 'andrea';
+
+const badge = document.getElementById('rep-badge');
+const btnImprimir = document.getElementById('btn-imprimir');
+const resumenBox = document.getElementById('resumen-box');
+
+if (esAndrea) {
+  badge.textContent = 'Andrea Rey';
+  badge.classList.add('azul');
+  document.documentElement.style.setProperty('--accent', '#1B3F7A');
+  document.documentElement.style.setProperty('--accent-dark', '#122B55');
+  document.documentElement.style.setProperty('--accent-light', '#E8EEF8');
+  btnImprimir.classList.add('azul-btn');
+  resumenBox.classList.add('azul-box');
+} else {
+  badge.textContent = 'Salvador Ortiz';
+  badge.classList.add('rojo');
+}
+
+// Fecha default = hoy
+const hoy = new Date();
+document.getElementById('fecha').value = hoy.toISOString().split('T')[0];
+document.getElementById('print-folio-date').textContent =
+  'Folio: ' + hoy.getFullYear().toString().slice(-2) +
+  String(hoy.getMonth()+1).padStart(2,'0') +
+  String(hoy.getDate()).padStart(2,'0') +
+  '-' + String(Math.floor(Math.random()*900)+100);
+
+// ── CATÁLOGO INVENTARIO ──
+const catalogoInv = [
+  'Cama matrimonial','Cama individual','Cama king/queen',
+  'Sala (sillones)','Sillón individual','Love seat',
+  'Comedor (mesa+sillas)','Barra cocina','Mesa centro',
+  'Refrigerador','Lavadora','Secadora',
+  'Estufa','Microondas','Lavavajillas',
+  'TV hasta 55"','TV 55" o más','Consola/equipo audio',
+  'Escritorio','Silla oficina','Librero',
+  'Closet / Ropero','Chest de cajones','Cómoda',
+  'Cajas medianas (aprox)','Cajas grandes (aprox)','Bolsas',
+  'Plantas','Bicicleta','Moto / scooter',
+];
+
+const grid = document.getElementById('inv-grid');
+catalogoInv.forEach((art, i) => {
+  const div = document.createElement('div');
+  div.className = 'inv-item';
+  div.id = 'inv-' + i;
+  div.innerHTML = `
+    <div class="inv-check">✓</div>
+    <span class="inv-label">${art}</span>
+    <input class="inv-count" type="number" min="1" max="99" value="1" title="Cantidad" onclick="e=>e.stopPropagation()">
+  `;
+  div.addEventListener('click', function(e) {
+    if (e.target.classList.contains('inv-count')) return;
+    this.classList.toggle('checked');
+  });
+  grid.appendChild(div);
+});
+
+// ── TABLA MEDIDAS ──
+const artMedidas = ['Refrigerador','Lavadora','Closet / Ropero','TV grande','Sofá/Sala','Cama'];
+const tbody = document.getElementById('medidas-body');
+artMedidas.forEach(art => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${art}</td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="text" placeholder="—"></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+function addMedidaRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Artículo"></td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="number" placeholder="—" min="0"></td>
+    <td><input type="text" placeholder="—"></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// ── IMPRIMIR ──
+function imprimirOrden() {
+  // Armar resumen rápido
+  const nombre = document.getElementById('cliente-nombre').value;
+  const fecha = document.getElementById('fecha').value;
+  const origen = document.getElementById('origen').value;
+  const destino = document.getElementById('destino').value;
+  const cuota = document.getElementById('cond-cuota').value;
+
+  const seleccionados = [...document.querySelectorAll('.inv-item.checked')]
+    .map(el => {
+      const lbl = el.querySelector('.inv-label').textContent;
+      const qty = el.querySelector('.inv-count').value;
+      return qty > 1 ? `${lbl} ×${qty}` : lbl;
+    });
+
+  if (nombre || fecha || cuota) {
+    const items = [];
+    if (nombre) items.push(nombre);
+    if (fecha) items.push(fecha);
+    if (origen) items.push('Origen: ' + origen.substring(0, 30) + '…');
+    if (destino) items.push('Destino: ' + destino.substring(0, 30) + '…');
+    if (cuota) items.push('$' + cuota);
+    if (seleccionados.length) items.push(seleccionados.length + ' artículos');
+
+    const box = document.getElementById('resumen-box');
+    const itemsDiv = document.getElementById('resumen-items');
+    itemsDiv.innerHTML = items.map(i => `<span class="resumen-tag">${i}</span>`).join('');
+    box.classList.add('visible');
+  }
+
+  setTimeout(() => window.print(), 200);
+}
+</script>
+</body>
+</html>
