@@ -1,12 +1,11 @@
 // config.js — Mudanzas Express Contract Generator
 // ================================================
-// El Claude API Key NO va aquí — vive en variables de ambiente de Netlify.
-// Ver README.md → sección "Variables de ambiente en Netlify"
+// El Claude API Key y las credenciales de la base de datos NO van aquí —
+// viven en variables de ambiente de Netlify (Site settings → Environment variables):
+//   CLAUDE_API_KEY, DB_SERVER, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+// El registro de contratos usa Azure SQL Server (netlify/functions/register.js),
+// ya no Google Sheets. Ver sql/schema.sql para el esquema de la tabla.
 
-// 1. GOOGLE SHEETS — registro automático de contratos
-window.APPS_SCRIPT_URL = '';
-// Ejemplo: 'https://script.google.com/macros/s/AKfycb.../exec'
-
-// 2. GOOGLE MAPS AUTOCOMPLETE (opcional)
+// GOOGLE MAPS AUTOCOMPLETE (opcional)
 window.GOOGLE_MAPS_KEY = '';
 // Ejemplo: 'AIzaSyB...'

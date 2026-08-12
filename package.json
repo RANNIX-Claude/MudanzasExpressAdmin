@@ -1,0 +1,9 @@
+{
+  "name": "mudanzas-express-contratos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Netlify Functions para Mudanzas Express (Claude API + Azure SQL)",
+  "dependencies": {
+    "mssql": "^10.0.2"
+  }
+}
