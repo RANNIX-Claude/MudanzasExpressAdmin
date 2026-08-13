@@ -164,6 +164,7 @@ select.fi{cursor:pointer}
 .doc-btn:hover{transform:translateX(3px);box-shadow:0 4px 12px rgba(0,0,0,.07)}
 .doc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .doc-icon.contrato{background:var(--rojo-light)}
+.doc-icon.cotizacion{background:var(--yellow-light)}
 .doc-icon.orden{background:var(--gray)}
 .doc-icon.bono{background:var(--green-light)}
 .doc-txt-name{font-weight:700;font-size:15px}
@@ -345,6 +346,14 @@ select.fi{cursor:pointer}
         <div>
           <div class="doc-txt-name">Contrato</div>
           <div class="doc-txt-sub" id="doc-sub-contrato">—</div>
+        </div>
+        <span class="doc-arrow">›</span>
+      </div>
+      <div class="doc-btn" onclick="irDoc('cotizacion')">
+        <div class="doc-icon cotizacion">🧾</div>
+        <div>
+          <div class="doc-txt-name">Cotización</div>
+          <div class="doc-txt-sub">Sin compromiso · IVA desglosado · vigencia 15 días</div>
         </div>
         <span class="doc-arrow">›</span>
       </div>
@@ -671,6 +680,7 @@ function irDoc(tipo) {
   sessionStorage.setItem('mex_srv', JSON.stringify(activo));
   const urls = {
     contrato: 'contrato.html',
+    cotizacion: 'cotizacion.html',
     orden: `orden.html?rep=${activo.vendedor}`,
     bono: activo.vendedor === 'andrea' ? 'Bono_Azul.html' : 'Bono_rojo.html',
   };
