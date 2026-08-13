@@ -73,7 +73,8 @@ ${texto}`;
 
   const requestBody = JSON.stringify({
     model: 'claude-sonnet-5',
-    max_tokens: 1000,
+    max_tokens: 1500,
+    thinking: { type: 'disabled' },
     messages: [{ role: 'user', content: prompt }]
   });
 
@@ -108,7 +109,8 @@ ${texto}`;
             return;
           }
 
-          const text = apiResp.content?.[0]?.text || '{}';
+          const textBlock = (apiResp.content || []).find(b => b.type === 'text');
+          const text = textBlock?.text || '{}';
           // Limpiar markdown si Claude lo incluye de todas formas
           const clean = text.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
           const data = JSON.parse(clean);
