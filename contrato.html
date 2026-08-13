@@ -600,12 +600,13 @@ function renderPreview() {
     <p style="margin-top:20px">En Ciudad de México, a los ${d.fechaFirma}, firman de conformidad:</p>
     <div class="sign-row">
       <div class="sign-block">
-        <img class="sign-img" src="${t.firmaImg}" onerror="this.style.display='none'"/>
+        <img class="sign-img" src="${t.firmaImg}" onerror="this.style.visibility='hidden'"/>
         <div class="sign-line"></div>
         <b>${t.rep} / ${t.repCargo}</b><br/><span style="font-size:11px;color:#888">Firma del Proveedor</span>
       </div>
       <div class="sign-block">
-        <div class="sign-line" style="margin-top:54px"></div>
+        <div class="sign-img" style="visibility:hidden"></div>
+        <div class="sign-line"></div>
         <b>${d.representante} / Cliente — ${d.cliente}</b><br/><span style="font-size:11px;color:#888">Firma del Cliente</span>
       </div>
     </div>
