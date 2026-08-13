@@ -348,7 +348,11 @@ function prefillFromService(s) {
     }
   }
   if (s.notas) document.getElementById('fNotas').value = s.notas;
-  addItem(); // un item vacío por defecto
+  if (s.detalle?.length) {
+    s.detalle.forEach(d => addItem(d.cantidad, d.descripcion));
+  } else {
+    addItem(); // un item vacío por defecto
+  }
 }
 
 function applyTemplate() {
