@@ -137,6 +137,16 @@ ${texto}`;
       });
     });
 
+    // Netlify/AWS mata la function en ~26s con un 504 en HTML (rompe el JSON.parse
+    // del cliente). Cortamos antes, con un mensaje claro, si el texto es muy largo.
+    req.setTimeout(20000, () => {
+      req.destroy();
+      resolve({
+        statusCode: 504, headers: CORS,
+        body: JSON.stringify({ error: 'La IA tardó demasiado en responder (texto muy largo). Intenta con un fragmento más corto del chat.' })
+      });
+    });
+
     req.write(requestBody);
     req.end();
   });

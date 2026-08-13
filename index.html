@@ -571,7 +571,9 @@ async function extraerWA() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({texto})
     });
-    const d = await res.json();
+    let d;
+    try { d = await res.json(); }
+    catch { throw new Error(res.status === 504 ? 'El servidor tardó demasiado. Intenta con un texto más corto.' : `Respuesta inválida del servidor (${res.status})`); }
     if (!res.ok || d.error) throw new Error(d.error || 'Error desconocido');
     if (d.nombre)   document.getElementById('f-nombre').value  = d.nombre;
     if (d.telefono) document.getElementById('f-tel').value     = d.telefono;
