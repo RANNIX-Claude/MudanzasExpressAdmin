@@ -89,6 +89,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .preview-contract .sign-block{text-align:center}
 .preview-contract .sign-line{border-top:1.5px solid var(--dark);margin:40px 0 6px}
 .preview-contract .sign-img{height:50px;margin-bottom:4px}
+.preview-contract .doc-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;border-radius:10px;color:#fff;margin-bottom:18px}
+.preview-contract .doc-header-left{display:flex;align-items:center;gap:12px}
+.preview-contract .doc-logo{height:48px;width:48px;border-radius:50%;object-fit:cover;background:#fff}
+.preview-contract .doc-company{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:.02em}
+.preview-contract .doc-address,.preview-contract .doc-rep{font-size:10px;opacity:.9}
+.preview-contract .doc-header-right{text-align:right;font-size:10px;white-space:nowrap}
+.preview-contract .doc-doctype{font-weight:700;letter-spacing:.05em;margin-bottom:2px}
+.preview-contract .doc-folio,.preview-contract .doc-fecha{opacity:.9}
+.preview-contract .inv-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
+.preview-contract .inv-table th{padding:7px 10px;text-align:left;color:#fff;font-weight:600}
+.preview-contract .inv-table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.preview-contract .inv-table tr:nth-child(even) td{background:#FAFBFC}
+.preview-contract .total-banner{text-align:center;border-radius:8px;padding:14px;margin:14px 0}
+.preview-contract .total-banner .tb-label{font-size:11px;letter-spacing:.08em;color:#fff;opacity:.9}
+.preview-contract .total-banner .tb-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;margin:2px 0;color:#fff}
+.preview-contract .total-banner .tb-words{font-size:10px;color:#fff;opacity:.9}
+.preview-contract .footer-note{text-align:center;font-size:10px;color:var(--muted);margin-top:20px;border-top:1px solid var(--border);padding-top:10px}
 
 /* MODAL WA */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -345,7 +362,7 @@ function addItem(qty='', desc='') {
   const list = document.getElementById('inventoryList');
   const div = document.createElement('div');
   div.className = 'inventory-item';
-  div.innerHTML = `<input type="number" class="qty" value="${qty||1}" min="1" placeholder="Cant."/>
+  div.innerHTML = `<input type="text" class="qty" value="${qty||1}" placeholder="Cant."/>
     <input type="text" value="${desc}" placeholder="Ej. Cama Queen Size con colchón"/>
     <button onclick="this.parentElement.remove()">×</button>`;
   list.appendChild(div);
@@ -421,34 +438,90 @@ function goPreview() {
     liq: parseFloat(document.getElementById('fLiq').value)||0,
     notas: document.getElementById('fNotas').value,
     fechaFirma: document.getElementById('fFechaFirma').value || document.getElementById('fFechaHoy').value,
+    fechaHoy: document.getElementById('fFechaHoy').value,
     inventario: getInventory(),
   };
+  cData.folio = genFolio(cData.cliente);
   renderPreview();
   goScreen(2);
 }
 
 function fmt(n){ return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n); }
 
+function genFolio(cliente) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const ini = (cliente||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,4) || 'CLI';
+  return `CON-${y}-${mm}${dd}-${ini}`;
+}
+
+function numToWords(n) {
+  n = Math.floor(n);
+  if (n <= 0) return 'Cero pesos 00/100 M.N.';
+  const UNIDADES = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve'];
+  const ESPECIALES = ['diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+  const VEINTES = ['veinte','veintiuno','veintidós','veintitrés','veinticuatro','veinticinco','veintiséis','veintisiete','veintiocho','veintinueve'];
+  const DECENAS = ['','diez','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+  const CENTENAS = ['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos'];
+
+  function tresDigitos(num) {
+    if (num === 0) return '';
+    if (num === 100) return 'cien';
+    const c = Math.floor(num/100), r = num%100;
+    let out = c>0 ? CENTENAS[c] : '';
+    if (r>0) {
+      let resto;
+      if (r<10) resto = UNIDADES[r];
+      else if (r<20) resto = ESPECIALES[r-10];
+      else if (r<30) resto = VEINTES[r-20];
+      else {
+        const d = Math.floor(r/10), u = r%10;
+        resto = u===0 ? DECENAS[d] : `${DECENAS[d]} y ${UNIDADES[u]}`;
+      }
+      out = out ? `${out} ${resto}` : resto;
+    }
+    return out;
+  }
+
+  function seccion(num, divisor, singular, plural) {
+    const cant = Math.floor(num/divisor);
+    const resto = num % divisor;
+    let letras = '';
+    if (cant === 1) letras = singular;
+    else if (cant > 1) letras = `${tresDigitos(cant)} ${plural}`;
+    return { letras, resto };
+  }
+
+  const millones = seccion(n, 1000000, 'un millón', 'millones');
+  const miles = seccion(millones.resto, 1000, 'mil', 'mil');
+  const partes = [millones.letras, miles.letras, tresDigitos(miles.resto)].filter(Boolean);
+  let texto = partes.join(' ').replace(/\s+/g,' ').trim();
+  texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+  return `${texto} pesos 00/100 M.N.`;
+}
+
 function renderPreview() {
   const d = cData; const t = d.t;
   const invHtml = d.inventario.length
-    ? `<ul class="items-list">${d.inventario.map(i=>`<li>${i.qty} ${i.desc}</li>`).join('')}</ul>`
+    ? `<table class="inv-table"><thead><tr style="background:${t.color}"><th>Artículo / Mueble</th><th style="text-align:center">Cant.</th></tr></thead><tbody>
+        ${d.inventario.map(i=>`<tr><td>${i.desc}</td><td style="text-align:center">${i.qty}</td></tr>`).join('')}
+       </tbody></table>`
     : '<p style="color:#888;font-size:12px">Sin inventario capturado</p>';
 
   const clausulas = t.clausulas ? `
-    <div class="sec-title" style="color:${t.color}">4. RESPONSABILIDADES DEL CLIENTE</div>
-    <p>4.1 El Cliente es responsable de proporcionar información precisa y completa sobre la carga, así como de asegurar que el acceso esté despejado y sea seguro. 4.2 El Cliente se compromete a informar al Proveedor sobre cualquier cambio con la mayor anticipación posible.</p>
-    <div class="sec-title" style="color:${t.color}">5. SEGURO DE CARGA</div>
-    <p>5.1 El Proveedor cuenta con seguro de carga básico. El Cliente puede solicitar seguro adicional sujeto a tarifas adicionales.</p>
-    <div class="sec-title" style="color:${t.color}">6. LIMITACIÓN DE RESPONSABILIDAD</div>
-    <p>6.1 El Proveedor no será responsable de daños por circunstancias fuera de su control (accidentes de tráfico, condiciones climáticas o acciones de terceros).</p>
-    <div class="sec-title" style="color:${t.color}">7. CLÁUSULA DE CANCELACIÓN</div>
-    <p>7.1 En caso de cancelación por parte del cliente, Mudanzas Express no reembolsará el anticipo pagado. 7.2 Si Mudanzas Express cancela por causas atribuibles a la empresa, se reembolsará el anticipo en su totalidad.</p>
-    <div class="sec-title" style="color:${t.color}">8. LEY APLICABLE</div>
-    <p>Este Contrato se regirá por las leyes de México, Ciudad de México.</p>
+    <div class="sec-title" style="color:${t.color}">7. CANCELACIÓN Y PENALIZACIÓN</div>
+    <p>En caso de cancelación por parte del cliente, Mudanzas Express no reembolsará el anticipo pagado. Si Mudanzas Express cancela el servicio, se reembolsará el anticipo en su totalidad.</p>
+    <div class="sec-title" style="color:${t.color}">8. RESPONSABILIDADES DEL CLIENTE</div>
+    <p>El Cliente es responsable de proporcionar información precisa sobre los accesos y condiciones en el domicilio de origen y destino, garantizar libre acceso en la fecha y horario acordados, e informar con anticipación cualquier cambio en horarios o ubicaciones.</p>
+    <div class="sec-title" style="color:${t.color}">9. LIMITACIÓN DE RESPONSABILIDAD</div>
+    <p>Mudanzas Express no se hace responsable de daños causados por fenómenos naturales, actos de terceros, accidentes de tránsito no imputables al conductor, o condiciones climáticas adversas. No se responsabiliza por defectos preexistentes en los artículos no visibles al momento de la carga.</p>
+    <div class="sec-title" style="color:${t.color}">10. LEY APLICABLE</div>
+    <p>Este contrato se rige por las leyes de los Estados Unidos Mexicanos, con jurisdicción en la Ciudad de México. Se emite en formato digital y se comparte a ambas partes por medios electrónicos, teniendo cada una plena validez de su copia.</p>
   ` : `
-    <div class="sec-title" style="color:${t.color}">4. RESPONSABILIDADES Y CONDICIONES GENERALES</div>
-    <p>a) El Cliente proporcionará información precisa sobre la carga. b) El proveedor cuenta con seguro de carga básico. c) El Proveedor no será responsable de daños por circunstancias fuera de su control. d) Este contrato se rige por las leyes de México, Ciudad de México.</p>
+    <div class="sec-title" style="color:${t.color}">7. RESPONSABILIDADES Y CONDICIONES GENERALES</div>
+    <p>El Cliente proporcionará información precisa sobre la carga y accesos, y garantizará libre acceso en la fecha y horario acordados. El Proveedor no será responsable de daños por circunstancias fuera de su control. En caso de cancelación por parte del cliente, el anticipo no será reembolsable. Este contrato se rige por las leyes de México, Ciudad de México.</p>
   `;
 
   const cuentaBanco = t.cuenta ? `Cuenta: ${t.cuenta} | ` : '';
@@ -457,31 +530,69 @@ function renderPreview() {
   const liqStr = d.liq > 0 ? fmt(d.liq) : '—';
 
   document.getElementById('previewContent').innerHTML = `
-    <div class="contract-logo"><img src="logo_mudanzas.png" onerror="this.parentElement.innerHTML='<b style=font-size:20px>MUDANZAS EXPRESS</b>'"/></div>
-    <div class="contract-addr">Calle Petén 227, Col. Narvarte, C.P. 03023, Alcaldía Benito Juárez, CDMX · Tel: 55 3111 3181</div>
-    <div class="contract-divider" style="background:${t.color}"></div>
-    <div class="contract-title">CONTRATO DE SERVICIOS DE MUDANZA EXPRESS</div>
+    <div class="doc-header" style="background:${t.color}">
+      <div class="doc-header-left">
+        <img class="doc-logo" src="${t.logoImg}" onerror="this.style.display='none'"/>
+        <div>
+          <div class="doc-company">MUDANZAS EXPRESS</div>
+          <div class="doc-address">Calle Petén 227, Col. Narvarte, C.P. 03023, Alcaldía Benito Juárez, CDMX</div>
+          <div class="doc-rep">Representante: ${t.rep}</div>
+        </div>
+      </div>
+      <div class="doc-header-right">
+        <div class="doc-doctype">CONTRATO DE SERVICIO</div>
+        <div class="doc-folio">Folio: ${d.folio}</div>
+        <div class="doc-fecha">Fecha: ${d.fechaHoy}</div>
+      </div>
+    </div>
+    <div class="contract-title">CONTRATO DE SERVICIO DE MUDANZA</div>
+
+    <div class="sec-title" style="color:${t.color}">PARTES</div>
     <div class="contract-parties">
       <div class="party"><b>PROVEEDOR:</b> Mudanzas Express, Petén 227, Narvarte, CDMX.<br/>Representante: <b>${t.rep} — ${t.repCargo}</b></div>
       <div class="party"><b>CLIENTE:</b> ${d.cliente}<br/>Representante: <b>${d.representante}</b></div>
     </div>
-    <div class="sec-title" style="color:${t.color}">1. OBJETO Y DESCRIPCIÓN DEL SERVICIO</div>
-    <p>Mudanzas Express se compromete a prestar al Cliente el servicio de traslado en <b>${d.viajes} viaje(s)</b>. ${d.equipo}. El servicio incluye protección de muebles con colchonetas, esquineros y playo; carga, descarga, logística y transportación.</p>
-    <p style="margin-top:8px"><b>Artículos a transportar:</b></p>${invHtml}
-    <div class="sec-title" style="color:${t.color}">2. FECHA Y HORARIO</div>
-    <p><b>Fecha:</b> ${d.fecha} &nbsp;|&nbsp; <b>Hora:</b> ${d.hora}<br/><b>Origen:</b> ${d.origen}<br/><b>Destino:</b> ${d.destino}</p>
-    <div class="sec-title" style="color:${t.color}">3. PRECIO Y FORMA DE PAGO</div>
+
+    <div class="sec-title" style="color:${t.color}">1. OBJETO DEL CONTRATO</div>
+    <p>Mudanzas Express se compromete a prestar a la cliente <b>${d.cliente}</b> el servicio de mudanza en <b>${d.viajes} viaje(s)</b>, consistente en la carga, protección, traslado y descarga de sus pertenencias desde el domicilio de origen hasta el domicilio de destino, en la fecha y condiciones pactadas.</p>
+
+    <div class="sec-title" style="color:${t.color}">2. UBICACIONES Y FECHA</div>
+    <p><b>Origen:</b> ${d.origen}<br/><b>Destino:</b> ${d.destino}<br/><b>Fecha del servicio:</b> ${d.fecha} &nbsp;|&nbsp; <b>Hora:</b> ${d.hora}</p>
+
+    <div class="sec-title" style="color:${t.color}">3. CARACTERÍSTICAS DEL SERVICIO</div>
+    <p><b>Equipo:</b> ${d.equipo}.<br/><b>Protección:</b> Colchonetas acolchadas, esquineros y emplaye industrial.<br/><b>Servicio incluye:</b> Carga en origen, logística de traslado, transportación punto A a punto B y descarga en destino.</p>
+
+    <div class="sec-title" style="color:${t.color}">4. INVENTARIO DE ARTÍCULOS</div>
+    <p style="font-size:11px;color:var(--muted)">Cualquier artículo adicional no contemplado que requiera espacio o maniobras extra será cotizado y cobrado por separado el día del servicio, previo acuerdo entre las partes.</p>
+    ${invHtml}
+
+    <div class="sec-title" style="color:${t.color}">5. TARIFAS Y CONDICIONES DE PAGO</div>
+    <p>Costo total del servicio: <b>${d.total>0?fmt(d.total):'—'}</b>, IVA incluido.<br/>Anticipo: <b>${antStr}</b>. Saldo a liquidar: <b>${liqStr}</b> contra entrega, al concluir la descarga.</p>
+    ${d.notas ? `<p style="font-size:11px;color:#666;margin-top:4px">${d.notas}</p>` : ''}
+
+    <div class="sec-title" style="color:${t.color}">6. SEGURO DE CARGA</div>
+    <p>El servicio cuenta con seguro de carga para los bienes transportados durante el trayecto. El cliente puede solicitar los detalles y condiciones de cobertura a Mudanzas Express antes de la fecha del servicio.</p>
+
+    ${clausulas}
+
+    <div class="sec-title" style="color:${t.color}">RESUMEN DE PAGOS</div>
     <table class="price-table">
       <thead><tr style="background:${t.color}"><th>Concepto</th><th>Monto</th></tr></thead>
       <tbody>
         <tr><td>Costo total del servicio</td><td>${d.total>0?fmt(d.total):'—'}</td></tr>
-        <tr><td>Anticipo — al apartar fecha y horario</td><td>${antStr}</td></tr>
-        <tr><td>Liquidación — al finalizar el servicio</td><td>${liqStr}</td></tr>
+        <tr><td>Anticipo recibido</td><td>${antStr}</td></tr>
+        <tr><td>Saldo a liquidar contra entrega en destino</td><td>${liqStr}</td></tr>
       </tbody>
     </table>
-    ${d.notas ? `<p style="font-size:11px;color:#666;margin-top:4px">${d.notas}</p>` : ''}
-    <div class="banco-box"><b>Banco:</b> ${t.banco} | ${cuentaBanco}${tarjetaBanco}<b>CLABE:</b> ${t.clabe} | A nombre de: <b>${t.nombreBanco}</b><br/><b>Formas de pago:</b> Efectivo, transferencia, todas las tarjetas (MSI disponibles).</div>
-    ${clausulas}
+
+    <div class="total-banner" style="background:var(--orange)">
+      <div class="tb-label">TOTAL DEL SERVICIO</div>
+      <div class="tb-amount">${d.total>0?fmt(d.total):'—'}</div>
+      ${d.total>0 ? `<div class="tb-words">${numToWords(d.total)} — IVA incluido</div>` : ''}
+    </div>
+
+    <div class="banco-box"><b>DATOS BANCARIOS</b><br/><b>Banco:</b> ${t.banco} | ${cuentaBanco}${tarjetaBanco}<b>CLABE:</b> ${t.clabe} | A nombre de: <b>${t.nombreBanco}</b><br/><b>Formas de pago:</b> Efectivo, transferencia, todas las tarjetas (MSI disponibles).</div>
+
     <p style="margin-top:20px">En Ciudad de México, a los ${d.fechaFirma}, firman de conformidad:</p>
     <div class="sign-row">
       <div class="sign-block">
@@ -493,7 +604,8 @@ function renderPreview() {
         <div class="sign-line" style="margin-top:54px"></div>
         <b>${d.representante} / Cliente — ${d.cliente}</b><br/><span style="font-size:11px;color:#888">Firma del Cliente</span>
       </div>
-    </div>`;
+    </div>
+    <div class="footer-note">Mudanzas Express • Calle Petén 227, Col. Narvarte, CDMX • Documento sin valor fiscal</div>`;
 }
 
 // ── PDF ──
@@ -510,22 +622,33 @@ async function generatePDF() {
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Barlow',sans-serif;font-size:12px;line-height:1.6;color:#1a1a1a;padding:30px 40px}
-        .contract-logo{text-align:center;margin-bottom:6px}.contract-logo img{height:60px}
-        .contract-addr{text-align:center;font-size:10px;color:#888;margin-bottom:12px}
-        .contract-divider{height:2px;background:${d.t.color};margin-bottom:12px}
         .contract-title{text-align:center;font-weight:700;font-size:16px;margin-bottom:14px}
         .contract-parties{display:grid;grid-template-columns:1fr 1fr;border:1px solid #ddd;margin-bottom:16px;font-size:11px}
         .party{padding:8px 12px}.party:first-child{background:#fafafa;border-right:1px solid #ddd}
         .sec-title{font-weight:700;font-size:12px;margin:14px 0 5px;padding-bottom:3px;border-bottom:1px solid #eee}
         .items-list{padding-left:16px;font-size:11px}.items-list li{margin-bottom:1px}
-        .price-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
-        .price-table th{padding:7px 10px;text-align:left;color:#fff;font-weight:600}
-        .price-table td{padding:6px 10px;border-bottom:1px solid #eee}
+        .price-table,.inv-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
+        .price-table th,.inv-table th{padding:7px 10px;text-align:left;color:#fff;font-weight:600}
+        .price-table td,.inv-table td{padding:6px 10px;border-bottom:1px solid #eee}
         .price-table td:last-child{text-align:right;font-weight:600}
+        .inv-table tr:nth-child(even) td{background:#fafbfc}
         .banco-box{border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:10px;margin-top:8px;background:#fafafa}
         .sign-row{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px}
         .sign-block{text-align:center}.sign-line{border-top:1px solid #1a1a1a;margin:40px 0 5px}
         .sign-img{height:40px;margin-bottom:2px}
+        .doc-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-radius:8px;color:#fff;margin-bottom:16px}
+        .doc-header-left{display:flex;align-items:center;gap:10px}
+        .doc-logo{height:44px;width:44px;border-radius:50%;object-fit:cover;background:#fff}
+        .doc-company{font-weight:800;font-size:15px;letter-spacing:.02em}
+        .doc-address,.doc-rep{font-size:9px;opacity:.9}
+        .doc-header-right{text-align:right;font-size:9px;white-space:nowrap}
+        .doc-doctype{font-weight:700;letter-spacing:.05em;margin-bottom:2px}
+        .doc-folio,.doc-fecha{opacity:.9}
+        .total-banner{text-align:center;border-radius:6px;padding:12px;margin:12px 0}
+        .total-banner .tb-label{font-size:10px;letter-spacing:.08em;color:#fff;opacity:.9}
+        .total-banner .tb-amount{font-weight:800;font-size:22px;margin:2px 0;color:#fff}
+        .total-banner .tb-words{font-size:9px;color:#fff;opacity:.9}
+        .footer-note{text-align:center;font-size:9px;color:#888;margin-top:16px;border-top:1px solid #eee;padding-top:8px}
         @media print{body{padding:15px 20px}}
       </style></head><body>${preview}
       <script>window.onload=()=>{window.print();window.close()}<\/script>

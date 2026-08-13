@@ -451,7 +451,7 @@ function addDetalleRow(cant='1', desc='') {
   const tbody = document.getElementById('detalle-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td class="td-cant"><input class="fi det-cant" type="number" min="1" value="${cant}" style="width:58px;text-align:center;padding:6px 8px"></td>
+    <td class="td-cant"><input class="fi det-cant" type="text" value="${cant}" style="width:58px;text-align:center;padding:6px 8px"></td>
     <td class="td-desc"><input class="fi det-desc" type="text" value="${desc}" placeholder="Ej. 2 camas matrimoniales" style="padding:6px 10px"></td>
     <td class="td-del"><button onclick="this.closest('tr').remove()" title="Eliminar">×</button></td>
   `;
