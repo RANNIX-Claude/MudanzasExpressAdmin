@@ -534,6 +534,7 @@ async function extraerWA() {
       body: JSON.stringify({texto})
     });
     const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error || 'Error desconocido');
     if (d.nombre)   document.getElementById('f-nombre').value  = d.nombre;
     if (d.telefono) document.getElementById('f-tel').value     = d.telefono;
     if (d.origen)   document.getElementById('f-origen').value  = d.origen;
@@ -551,7 +552,7 @@ async function extraerWA() {
     btn.textContent = '✓ Datos extraídos';
   } catch(e) {
     btn.textContent = '⚡ Extraer datos con IA';
-    alert('Error al extraer. Verifica que CLAUDE_API_KEY esté configurada en Netlify.');
+    alert('Error al extraer: ' + e.message);
   } finally {
     btn.disabled = false;
     setTimeout(() => { btn.textContent = '⚡ Extraer datos con IA'; }, 3000);
