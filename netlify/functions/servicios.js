@@ -6,7 +6,7 @@
 // Variables de ambiente: ver netlify/functions/lib/db.js
 // Esquema de la tabla: ver mudanzas-v3/sql/schema.sql (dbo.Servicios)
 
-const { sql, getPool, dbConfigured } = require('./lib/db');
+const { sql, getPool, dbConfigured, ensureServiciosTable } = require('./lib/db');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +66,7 @@ exports.handler = async function (event) {
 
   try {
     const pool = await getPool();
+    await ensureServiciosTable();
 
     if (event.httpMethod === 'GET') {
       const result = await pool.request().query('SELECT * FROM dbo.Servicios ORDER BY creado DESC');
