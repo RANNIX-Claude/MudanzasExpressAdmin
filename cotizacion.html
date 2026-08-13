@@ -83,6 +83,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .preview-contract .inv-table tr:nth-child(even) td{background:#FAFBFC}
 .preview-contract .banco-box{border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:11px;margin-top:10px;background:#FAFAFA}
 .preview-contract .sign-row{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px}
+.preview-contract .sign-row-single{grid-template-columns:1fr;max-width:280px;margin-left:auto;margin-right:auto}
 .preview-contract .sign-block{text-align:center}
 .preview-contract .sign-line{border-top:1.5px solid var(--dark);margin:40px 0 6px}
 .preview-contract .sign-img{height:50px;margin-bottom:4px}
@@ -497,16 +498,11 @@ function renderPreview() {
     <p>La presente cotización tiene una vigencia de 15 días naturales a partir de su emisión. El precio y condiciones están sujetos a confirmación de fechas e inventario definitivo. Cualquier variación en el volumen o características de los bienes podrá implicar un ajuste en el costo. Factura disponible con IVA incluido.</p>
 
     <p style="margin-top:20px">En Ciudad de México, a ${d.fechaEmisionStr}:</p>
-    <div class="sign-row">
+    <div class="sign-row sign-row-single">
       <div class="sign-block">
         <img class="sign-img" src="${t.firmaImg}" onerror="this.style.visibility='hidden'"/>
         <div class="sign-line"></div>
-        <b>${t.rep} / Mudanzas Express</b><br/><span style="font-size:11px;color:#888">Firma Proveedor</span>
-      </div>
-      <div class="sign-block">
-        <div class="sign-img" style="visibility:hidden"></div>
-        <div class="sign-line"></div>
-        <b>${d.cliente}</b><br/><span style="font-size:11px;color:#888">Vo. Bo. Cliente</span>
+        <b>${t.rep} / Mudanzas Express</b><br/><span style="font-size:11px;color:#888">Firma de quien emite la cotización</span>
       </div>
     </div>
 
@@ -557,6 +553,7 @@ async function generatePDF() {
         .inv-table tr:nth-child(even) td{background:#fafbfc}
         .banco-box{border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:10px;margin-top:8px;background:#fafafa}
         .sign-row{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px}
+        .sign-row-single{grid-template-columns:1fr;max-width:240px;margin-left:auto;margin-right:auto}
         .sign-block{text-align:center}.sign-line{border-top:1px solid #1a1a1a;margin:40px 0 5px}
         .sign-img{height:40px;margin-bottom:2px}
         .doc-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-radius:8px;color:#fff;margin-bottom:16px}
