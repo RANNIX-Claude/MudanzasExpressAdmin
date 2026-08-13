@@ -10,41 +10,13 @@
 //
 // Esquema de la tabla: ver mudanzas-v3/sql/schema.sql
 
-const sql = require('mssql');
+const { sql, getPool, dbConfigured } = require('./lib/db');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
-
-const dbConfig = {
-  server: process.env.DB_SERVER,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
-  options: {
-    // Azure SQL requiere encrypt=true; muchos hosts compartidos (site4now, etc.)
-    // no lo soportan bien. Configurable vía env var por si tu proveedor lo requiere distinto.
-    encrypt: process.env.DB_ENCRYPT ? process.env.DB_ENCRYPT === 'true' : true,
-    trustServerCertificate: process.env.DB_TRUST_CERT === 'true',
-  },
-  pool: { max: 1, min: 0, idleTimeoutMillis: 30000 },
-  connectionTimeout: 15000,
-};
-
-// Reutilizar el pool entre invocaciones (contenedor Lambda "caliente")
-let poolPromise;
-function getPool() {
-  if (!poolPromise) {
-    poolPromise = sql.connect(dbConfig).catch((err) => {
-      poolPromise = null; // permitir reintento en la siguiente invocación
-      throw err;
-    });
-  }
-  return poolPromise;
-}
 
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') {
@@ -54,7 +26,7 @@ exports.handler = async function (event) {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
-  if (!process.env.DB_SERVER || !process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+  if (!dbConfigured()) {
     console.error('Faltan variables de ambiente de la base de datos (DB_SERVER/DB_NAME/DB_USER/DB_PASSWORD)');
     return {
       statusCode: 500, headers: CORS,

@@ -376,16 +376,43 @@ select.fi{cursor:pointer}
 <script>
 document.getElementById('appVersion').textContent = window.APP_VERSION || '';
 
-const KEY = 'mex_servicios_v2';
+const API_SERVICIOS = '/.netlify/functions/servicios';
+const LEGACY_KEY = 'mex_servicios_v2';
 let servicios = [];
 let filtro = 'todos';
 let activo = null;
 let vendedor = null;
 
-function load() {
-  try { servicios = JSON.parse(localStorage.getItem(KEY)) || []; } catch { servicios = []; }
+async function load() {
+  try {
+    const res = await fetch(API_SERVICIOS);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    servicios = await res.json();
+    await migrarLocalStorage();
+  } catch (e) {
+    console.error('Error cargando servicios:', e);
+    alert('No se pudieron cargar los servicios: ' + e.message);
+    servicios = [];
+  }
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(servicios)); }
+
+// Migración única: sube a la base cualquier servicio que haya quedado
+// guardado solo en localStorage de esta computadora (versiones anteriores).
+async function migrarLocalStorage() {
+  const raw = localStorage.getItem(LEGACY_KEY);
+  if (!raw) return;
+  let local = [];
+  try { local = JSON.parse(raw) || []; } catch { localStorage.removeItem(LEGACY_KEY); return; }
+  const existingIds = new Set(servicios.map(s => s.id));
+  const nuevos = local.filter(s => s.id && s.nombre && !existingIds.has(s.id));
+  for (const s of nuevos) {
+    try {
+      await fetch(API_SERVICIOS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) });
+      servicios.push(s);
+    } catch (e) { console.error('Error migrando servicio', s.id, e); }
+  }
+  localStorage.removeItem(LEGACY_KEY);
+}
 
 /* ── RENDER LISTA ── */
 function render() {
@@ -495,7 +522,7 @@ function updSaveBtn() {
   btn.className = 'btn-save' + (vendedor ? ' '+vendedor : '');
 }
 
-function guardar() {
+async function guardar() {
   if (!vendedor) { alert('Elige el vendedor primero'); return; }
   const nombre = document.getElementById('f-nombre').value.trim();
   if (!nombre) { alert('El nombre del cliente es obligatorio'); return; }
@@ -515,11 +542,22 @@ function guardar() {
     notas: document.getElementById('f-notas').value.trim(),
     detalle: getDetalle(),
   };
-  servicios.unshift(s);
-  save();
-  cerrar('ov-nuevo');
-  render();
-  setTimeout(() => abrirFicha(s.id), 320);
+  const btn = document.getElementById('btn-save');
+  const prevText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const res = await fetch(API_SERVICIOS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) });
+    const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error || 'Error al guardar');
+    servicios.unshift(s);
+    cerrar('ov-nuevo');
+    render();
+    setTimeout(() => abrirFicha(s.id), 320);
+  } catch (e) {
+    alert('Error al guardar el servicio: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = prevText;
+  }
 }
 
 /* ── WHATSAPP EXTRACT ── */
@@ -608,11 +646,22 @@ function renderEst() {
   ).join('');
 }
 
-function cambiarEst(e) {
+async function cambiarEst(e) {
+  const prevEstatus = activo.estatus;
   activo.estatus = e;
   const i = servicios.findIndex(s => s.id === activo.id);
   if (i >= 0) servicios[i] = activo;
-  save(); render(); renderEst();
+  render(); renderEst();
+  try {
+    const res = await fetch(API_SERVICIOS, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(activo) });
+    const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error || 'Error al actualizar');
+  } catch (err) {
+    alert('Error al actualizar estatus: ' + err.message);
+    activo.estatus = prevEstatus;
+    if (i >= 0) servicios[i] = activo;
+    render(); renderEst();
+  }
 }
 
 function irDoc(tipo) {
@@ -626,16 +675,23 @@ function irDoc(tipo) {
   window.location.href = urls[tipo];
 }
 
-function eliminar() {
+async function eliminar() {
   if (!confirm(`¿Eliminar el servicio de ${activo.nombre}? Esta acción no se puede deshacer.`)) return;
-  servicios = servicios.filter(s => s.id !== activo.id);
-  save(); cerrar('ov-ficha'); render();
+  try {
+    const res = await fetch(`${API_SERVICIOS}?id=${encodeURIComponent(activo.id)}`, { method: 'DELETE' });
+    const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error || 'Error al eliminar');
+    servicios = servicios.filter(s => s.id !== activo.id);
+    cerrar('ov-ficha'); render();
+  } catch (e) {
+    alert('Error al eliminar: ' + e.message);
+  }
 }
 
 function cerrar(id) { document.getElementById(id).classList.remove('open'); }
 function bgClose(id, e) { if (e.target.id === id) cerrar(id); }
 
-load(); render();
+load().then(render);
 </script>
 </body>
 </html>
